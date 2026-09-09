@@ -179,7 +179,7 @@ StopRequested := false
 ; 按钮点击事件——开始执行（Click event - Start action）
 StartAction(actionId, *) {
     global IsRunning, StopRequested
-
+    
     config := ActionConfigs[actionId]
     controlKeys := config["ControlKeys"]
     keyToSend := "{" config["Key"] "}"
@@ -190,9 +190,9 @@ StartAction(actionId, *) {
     keyToRelease := ""
     for key in controlKeys {
         keyToHold := keyToHold "{" key " Down}"
-        keyToRelease := keyToRelease "{" key " Up}"
+        keyToRelease := "{" key " Up}" keyToRelease
     }
-
+    
     ; 控制标志（Control flags）
     startBtn.Enabled := false   ; 禁用开始按钮（Disable the start button）
     StopButton.Enabled := true      ; 启用停止按钮（Enable stop button）
@@ -209,7 +209,7 @@ StartAction(actionId, *) {
     
     ; 显示确认提示（Display confirm hint）
     if BasicAttackNeeded_Actions.Has(actionId)
-        result := MsgBox("请确保您目前正在对一个单位执行普通攻击指令。如果需要反复执行一段操作，建议您先将手动反复点击【提供状态效果至自身】，将自己置为【致盲】状态。`nPlease make sure you perform basic attack commands toward a unit. If you need to repeat a command, it's highly suggested that you put yourself as `"Blinded`" by clicking [Grant Self Status Effect] for multiple times by hand.`n点按确认后，程序将自动激活英雄联盟游戏窗口，并执行之后的指令。`nAfter you click the `"Confirm`" button, the program will automatically activate the League of Legends window and execute the commands hereafter.", "确认/Confirm", 0x41) ; 0x41 = OK/Cancel
+        result := MsgBox("请确保您目前正在对一个单位执行普通攻击指令。如果需要反复执行一段操作，建议您先将手动反复点击【提供状态效果至自身】，将自己置为【致盲】状态。`nPlease make sure you perform basic attack commands toward a unit. If you need to repeat a command, it's highly suggested that you put yourself as `"Blinded`" by clicking [Grant Self Status Effect] for multiple times by hand.`n点按确认后，程序将自动激活英雄联盟游戏窗口，并执行之后的指令。`nAfter you click the `"Confirm`" button, the program will automatically activate the League of Legends window and execute the commands hereafter.", "确认/Confirm", 0x41) ; 0x41选项会使得文本的左侧会带有一个感叹号（0x41 option causes an exclamation mark to appear to the left of the text）
     else
         result := MsgBox("点按确认后，程序将自动激活英雄联盟游戏窗口，并执行之后的指令。`nAfter you click the `"Confirm`" button, the program will automatically activate the League of Legends window and execute the commands hereafter.", "确认/Confirm", 0x41)
     
@@ -228,7 +228,7 @@ StartAction(actionId, *) {
     MonitorStopButton := ProgressMonitorGui.Add("Button", "w80 h30 xp+135 y+10 Default", "中止/Abort") ; 3. 添加一个“强制中止”按钮（Add an "Abort" button）
     MonitorStopButton.OnEvent("Click", StopAction)
     ProgressMonitorGui.Show("NoActivate") ; 显示这个监视窗口的同时避免抢走焦点（While this window is displayed, don't focus on it）
-
+    
     ; 设置循环计数器（Define loop counter）
     loopCount := 0
     
@@ -259,7 +259,7 @@ StartAction(actionId, *) {
         IsRunning := false
         return 3
     }
-
+    
     Loop maxLoops {
         ; 检查停止请求（Check stop request）
         if StopRequested {
@@ -284,7 +284,7 @@ StartAction(actionId, *) {
                 }
             }
         }
-
+        
         ; 发送按键（Send key press）
         try {
             Send(keyToSend) ; 核心（Core）
@@ -312,11 +312,11 @@ StartAction(actionId, *) {
     } catch Error as e {
         StatusText.Text := "警告：松开控制键失败。`nWarning: Failed to release control keys."
     }
-
+    
     ; 执行完成（Execution finished）
     ProgressMonitorGui.Destroy()
     IsRunning := false
-
+    
     ; MyGui.Show()          ; 确保窗口没有被最小化（Make sure the window isn't minimized）
     ; MyGui.Restore()       ; 如果窗口被最小化，则还原它（If the window has been minimized, restore it）
     ; WinActivate(MyGui.Hwnd) ; 将窗口激活到前台（Activate this window to make it front）
@@ -330,13 +330,13 @@ StartAction(actionId, *) {
     startBtn.Enabled := true
     StopButton.Enabled := false
     ProgressBar.Value := 0
-
+    
     return 0
 }
 
 StartCustom(*) {
     global CheckBox1, CheckBox2, CheckBox3, KeyEdit
-
+    
     ; 首先检查单键输入是否合法（First check whether the single key input is valid）
     inputKey := KeyEdit.Value
     if (StrLen(inputKey) = 0) {
@@ -347,7 +347,7 @@ StartCustom(*) {
         StatusText.Text := "无效单键。`nInvalid single key."
         return 1
     }
-
+    
     ; 设置控制键（Set control keys）
     controlKeys := []
     if CheckBox1.Value
@@ -358,8 +358,8 @@ StartCustom(*) {
         controlKeys.Push("Alt")
     
     ActionConfigs["custom"]["ControlKeys"] := controlKeys
-    ActionConfigs["custom"]["Key"] := "{" KeyEdit.Value "}"
-
+    ActionConfigs["custom"]["Key"] := KeyEdit.Value
+    
     StartAction("custom")
 }
 
@@ -405,7 +405,7 @@ ResetLoopCount(ranged) {
 UpdateInterval(*) {
     global interval
     inputValue := IntervalEdit.Value
-
+    
     if Integer(inputValue) >= 0 {
         interval := Integer(inputValue)
         StatusText.Text := Format("命令执行间隔已更新。`nCommand execution interval has been updated.", inputValue)
@@ -445,7 +445,7 @@ VerifyKeyValidity(keyStr) {
 UpdateStopKey(*) {
     global stopKey
     inputValue := StopKeyEdit.Value
-
+    
     if (StrLen(inputValue) = 0) {
         StatusText.Text := "请输入一个中止热键。`nPlease input a stop hotkey."
     }
