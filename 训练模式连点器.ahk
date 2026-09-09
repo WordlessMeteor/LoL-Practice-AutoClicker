@@ -61,32 +61,32 @@ StopButton.OnEvent("Click", StopAction)
 ActionConfigs := Map() ; 设置用于StartAction的动作配置表（Set up an action config table for StartAction process）
 ActionConfigs["incgold"] := Map() ; 每个动作也是一个Map对象，分别包含要按下的控制键、按键、要松开的控制键、按钮对象和描述（Each action is also a Map object, containing the control keys to press, the key, the control keys to release, the button object and the description）
 ActionConfigs["incgold"]["ControlKeys"] := ["Shift"] ; 表明要被持续按住的键（Indicates the key to be held down）
-ActionConfigs["incgold"]["Key"] := "t"
+ActionConfigs["incgold"]["Key"] := "T"
 ActionConfigs["incgold"]["Button"] := ActionButton_incgold
 ActionConfigs["incgold"]["Description"] := "增加金钱/Add Gold"
 ActionConfigs["inclevel"] := Map()
 ActionConfigs["inclevel"]["ControlKeys"] := ["Shift"]
-ActionConfigs["inclevel"]["Key"] := "y"
+ActionConfigs["inclevel"]["Key"] := "Y"
 ActionConfigs["inclevel"]["Button"] := ActionButton_inclevel
 ActionConfigs["inclevel"]["Description"] := "升级/Level Up"
 ActionConfigs["incunit100health"] := Map()
 ActionConfigs["incunit100health"]["ControlKeys"] := ["Ctrl", "Shift"]
-ActionConfigs["incunit100health"]["Key"] := "t"
+ActionConfigs["incunit100health"]["Key"] := "T"
 ActionConfigs["incunit100health"]["Button"] := ActionButton_incunit100health
 ActionConfigs["incunit100health"]["Description"] := "添加100最大生命值/Add 100 Max HP"
 ActionConfigs["decunit100health"] := Map()
 ActionConfigs["decunit100health"]["ControlKeys"] := ["Ctrl", "Shift"]
-ActionConfigs["decunit100health"]["Key"] := "y"
+ActionConfigs["decunit100health"]["Key"] := "Y"
 ActionConfigs["decunit100health"]["Button"] := ActionButton_decunit100health
 ActionConfigs["decunit100health"]["Description"] := "移除100最大生命值/Remove 100 Max HP"
 ActionConfigs["incunit10resistance"] := Map()
 ActionConfigs["incunit10resistance"]["ControlKeys"] := ["Ctrl", "Shift"]
-ActionConfigs["incunit10resistance"]["Key"] := "g"
+ActionConfigs["incunit10resistance"]["Key"] := "G"
 ActionConfigs["incunit10resistance"]["Button"] := ActionButton_incunit10resistance
 ActionConfigs["incunit10resistance"]["Description"] := "添加10双抗/Add 10 Resistances"
 ActionConfigs["decunit10resistance"] := Map()
 ActionConfigs["decunit10resistance"]["ControlKeys"] := ["Ctrl", "Shift"]
-ActionConfigs["decunit10resistance"]["Key"] := "h"
+ActionConfigs["decunit10resistance"]["Key"] := "H"
 ActionConfigs["decunit10resistance"]["Button"] := ActionButton_decunit10resistance
 ActionConfigs["decunit10resistance"]["Description"] := "移除10双抗/Remove 10 Resistances"
 ActionConfigs["custom"] := Map()
@@ -119,8 +119,10 @@ Repeat_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
 Repeat_UpdateButton.OnEvent("Click", UpdateLoopCount)
 RepeatNumber_text := MyGui.Add("Text", "w90 x+10 yp+5", "") ; 微移文本框纵坐标，使得视觉上垂直居中（Shift the text vertical coordinate to make it vertically centered in vision）
 UpdateRepetitionText(maxLoops)
-Repeat_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset")
-Repeat_ResetButton.OnEvent("Click", ResetLoopCount)
+Repeat_ResetButton := MyGui.Add("Button", "w120 x+0 yp-15 Center", "近战复位`nMelee Reset")
+Repeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(false))
+Repeat_ResetButton := MyGui.Add("Button", "w120 x+10 yp Center", "远程复位`nRanged Reset")
+Repeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(true))
 
 ;; 添加命令执行间隔设置区域（Add command execution interval area）
 MyGui.Add("Text", "w200 x" MyGui.MarginX * 2 + 500 " y+20", "间隔/Interval：") ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
@@ -143,13 +145,13 @@ StopKey_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset
 StopKey_ResetButton.OnEvent("Click", ResetStopKey)
 
 ;; 添加全参数复位按钮（Add all parameter reset button）
-AllParameter_ResetButton := MyGui.Add("Button", "w180 x" MyGui.MarginX * 2 + 500 + 225 " y+20 Center", "复位全部变量`nReset all parameters")
+AllParameter_ResetButton := MyGui.Add("Button", "w180 x" MyGui.MarginX * 2 + 500 + 200 + 80 + 10 " y+20 Center", "复位全部变量`nReset all parameters")
 AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
 
 ;; 添加按键格式说明文本（Add key format instruction text）
-MyGui.Add("Text", "w650 x" MyGui.MarginX + 500 + 5 " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
+MyGui.Add("Text", "w780 x" MyGui.MarginX + 500 + 5 " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
 
-MyGui.Add("Text", "w600 x" MyGui.MarginX * 2 + 500 " y+0", "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/")
+MyGui.Add("Text", "w730 x" MyGui.MarginX * 2 + 500 " y+0", "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/")
 
 ;; 设置按钮松开鼠标的事件（Set the button on-release event）
 ActionButton_incgold.OnEvent("Click", (*) => StartAction("incgold"))
@@ -180,7 +182,7 @@ StartAction(actionId, *) {
 
     config := ActionConfigs[actionId]
     controlKeys := config["ControlKeys"]
-    keyToSend := config["Key"]
+    keyToSend := "{" config["Key"] "}"
     startBtn := config["Button"]
     actionDesc := config["Description"]
     
@@ -356,7 +358,7 @@ StartCustom(*) {
         controlKeys.Push("Alt")
     
     ActionConfigs["custom"]["ControlKeys"] := controlKeys
-    ActionConfigs["custom"]["Key"] := KeyEdit.Value
+    ActionConfigs["custom"]["Key"] := "{" KeyEdit.Value "}"
 
     StartAction("custom")
 }
@@ -389,9 +391,12 @@ UpdateRepetitionText(maxLoops) {
     RepeatNumber_text.Text := Format("{1:d}次", maxLoops)
 }
 
-ResetLoopCount(*) {
+ResetLoopCount(ranged) {
     global maxLoops
-    maxLoops := 1980
+    if ranged
+        maxLoops := 1980
+    else
+        maxLoops := 1523
     UpdateRepetitionText(maxLoops)
     StatusText.Text := "重复次数已复位。`nThe number of repetitions has been reset."
 }
@@ -468,7 +473,7 @@ ResetStopKey(*) {
 
 ; 重置所有参数（Reset all parameters）
 ResetAllParameters(*) {
-    ResetLoopCount()
+    ResetLoopCount(true)
     ResetInterval()
     ResetStopKey()
     StatusText.Text := "所有变量已复位。`nAll parameters have been reset."
