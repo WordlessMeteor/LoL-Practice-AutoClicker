@@ -7,14 +7,14 @@ MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序
 
 
 ; 以管理员身份运行（Run As Administrator）
-; if (!A_IsAdmin) {
-;     try {
-;         Run '*RunAs "' A_ScriptFullPath '"'
-;         ExitApp
-;     } catch Error as e {
-;         MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
-;     }
-; }
+if (!A_IsAdmin) {
+    try {
+        Run '*RunAs "' A_ScriptFullPath '"'
+        ExitApp
+    } catch Error as e {
+        MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
+    }
+}
 
 ; 初始化全局变量（Initialize the global variable）
 maxLoops := 1980 ; 重复次数（Repetition times）
@@ -61,6 +61,7 @@ PopButton_custom.OnEvent("Click", PopSequence)
 ClearButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "清空/Clear")
 ClearButton_custom.OnEvent("Click", ClearSequence)
 RunSequenceButton := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 150 " y+10 center", "运行序列`nRun Sequence")
+RunSequenceButton.OnEvent("Click", (*) => StartAction("sequence"))
 
 MyGui.Add("Text", "w500 x" MyGui.MarginX " y+15 0x10") ; 添加水平分隔线（Add horizontal separator）
 
@@ -258,79 +259,123 @@ StartAction(actionId, *) {
         return 2
     }
     
-    ; 准备按键（Prepare keys to press）
-    controlKeys := config["ControlKeys"]
-    keyToHold := ""
-    keyToRelease := ""
-    for key in controlKeys {
-        keyToHold := keyToHold "{" key " Down}"
-        keyToRelease := "{" key " Up}" keyToRelease
-    }
-    
-    ; 按下控制键（Press control keys）
-    try {
-        Send(keyToHold)
-    } catch Error as e {
-        StatusText.Text := "错误：按下控制键失败。`nError: Failed to press control keys."
-        startBtn.Enabled := true
-        StopButton.Enabled := false
-        IsRunning := false
-        return 3
-    }
-    
-    ; 按下单键（Press the single key）
-    keyToSend := "{" config["Key"] "}"
-    Loop maxLoops {
-        ; 检查停止请求（Check stop request）
-        if StopRequested {
-            StatusText.Text := Format("已停止！执行次数：{1:d}。`nStopped! Number of times: {1:d}.", loopCount)
-            break
-        }
-        
-        ; 检查游戏窗口是否仍然存在（Check if the game window still exists）
-        if !WinExist("League of Legends (TM) Client") {
-            StatusText.Text := "错误：游戏窗口已关闭。`nError: The game window has been closed."
-            break
-        }
-        
-        ; 检查控制按键是否仍然被按下（Check if the control keys are still being held down）
-        for key in controlKeys {
-            if !GetKeyState(key, "P") {
+    ; 模拟按键（Simulate key press）
+    if actionId == "sequence" {
+        Loop maxLoops {
+            ; 检查停止请求（Check stop request）
+            if StopRequested {
+                StatusText.Text := Format("已停止！执行次数：{1:d}。`nStopped! Number of times: {1:d}.", loopCount)
+                break
+            }
+            
+            ; 检查游戏窗口是否仍然存在（Check if the game window still exists）
+            if !WinExist("League of Legends (TM) Client") {
+                StatusText.Text := "错误：游戏窗口已关闭。`nError: The game window has been closed."
+                break
+            }
+            
+            ; 发送按键（Send key press）
+            back := false
+            for index, array in keySeq {
+                keyToSend := array[1]
                 try {
-                    Send("{" key " Down}") ; 重新按下因未知原因被松开的按键（Re-press the key that has been released for unknown reason）
+                    Send(keyToSend) ; 核心（Core）
                 } catch Error as e {
                     StatusText.Text := "错误：发送按键失败。`nError: Failed to send keys."
-                    return 3
+                    back := true
+                    break
+                }
+                Sleep(interval)
+            }
+            if back
+                break
+            
+            ; 更新计数和界面（Update counter and UI status text）
+            loopCount := A_Index
+            ProgressBar.Value := loopCount / maxLoops * 100
+            StatusText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+            MonitorProgressBar.Value := loopCount / maxLoops * 100 ; 这部分是监视对话框的内容（This part is for monitor dialog box）
+            ProgressText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+            
+            ; 短暂延迟，确保游戏能处理按键（Short lag to ensure the game handle frequent key press request）
+            Sleep(interval)
+        }
+    }
+    else {
+        ; 准备按键（Prepare keys to press）
+        controlKeys := config["ControlKeys"]
+        keyToHold := ""
+        keyToRelease := ""
+        for key in controlKeys {
+            keyToHold := keyToHold "{" key " Down}"
+            keyToRelease := "{" key " Up}" keyToRelease
+        }
+        
+        ; 按下控制键（Press control keys）
+        try {
+            Send(keyToHold)
+        } catch Error as e {
+            StatusText.Text := "错误：按下控制键失败。`nError: Failed to press control keys."
+            startBtn.Enabled := true
+            StopButton.Enabled := false
+            IsRunning := false
+            return 3
+        }
+        
+        ; 按下单键（Press the single key）
+        keyToSend := "{" config["Key"] "}"
+        Loop maxLoops {
+            ; 检查停止请求（Check stop request）
+            if StopRequested {
+                StatusText.Text := Format("已停止！执行次数：{1:d}。`nStopped! Number of times: {1:d}.", loopCount)
+                break
+            }
+            
+            ; 检查游戏窗口是否仍然存在（Check if the game window still exists）
+            if !WinExist("League of Legends (TM) Client") {
+                StatusText.Text := "错误：游戏窗口已关闭。`nError: The game window has been closed."
+                break
+            }
+            
+            ; 检查控制按键是否仍然被按下（Check if the control keys are still being held down）
+            for key in controlKeys {
+                if !GetKeyState(key, "P") {
+                    try {
+                        Send("{" key " Down}") ; 重新按下因未知原因被松开的按键（Re-press the key that has been released for unknown reason）
+                    } catch Error as e {
+                        StatusText.Text := "错误：发送按键失败。`nError: Failed to send keys."
+                        return 3
+                    }
                 }
             }
+            
+            ; 发送按键（Send key press）
+            try {
+                Send(keyToSend) ; 核心（Core）
+            } catch Error as e {
+                StatusText.Text := "错误：发送按键失败。`nError: Failed to send keys."
+                break
+            }
+            
+            ; 更新计数和界面（Update counter and UI status text）
+            loopCount := A_Index
+            ProgressBar.Value := loopCount / maxLoops * 100
+            StatusText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+            MonitorProgressBar.Value := loopCount / maxLoops * 100 ; 这部分是监视对话框的内容（This part is for monitor dialog box）
+            ProgressText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+            
+            ; 短暂延迟，确保游戏能处理按键（Short lag to ensure the game handle frequent key press request）
+            Sleep(interval)
         }
         
-        ; 发送按键（Send key press）
+        ; 松开控制键（Release control keys）
+        ControlKeyReleased := false
         try {
-            Send(keyToSend) ; 核心（Core）
+            Send(keyToRelease)
+            ControlKeyReleased := true
         } catch Error as e {
-            StatusText.Text := "错误：发送按键失败。`nError: Failed to send keys."
-            break
+            StatusText.Text := "警告：松开控制键失败。`nWarning: Failed to release control keys."
         }
-        
-        ; 更新计数和界面（Update counter and UI status text）
-        loopCount := A_Index
-        ProgressBar.Value := loopCount / maxLoops * 100
-        StatusText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
-        MonitorProgressBar.Value := loopCount / maxLoops * 100 ; 这部分是监视对话框的内容（This part is for monitor dialog box）
-        ProgressText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
-        
-        ; 短暂延迟，确保游戏能处理按键（Short lag to ensure the game handle frequent key press request）
-        Sleep(interval)
-    }
-    
-    ; 松开控制键（Release control keys）
-    ControlKeyReleased := false
-    try {
-        Send(keyToRelease)
-        ControlKeyReleased := true
-    } catch Error as e {
-        StatusText.Text := "警告：松开控制键失败。`nWarning: Failed to release control keys."
     }
     
     ; 执行完成（Execution finished）
@@ -341,7 +386,7 @@ StartAction(actionId, *) {
     ; MyGui.Restore()       ; 如果窗口被最小化，则还原它（If the window has been minimized, restore it）
     ; WinActivate(MyGui.Hwnd) ; 将窗口激活到前台（Activate this window to make it front）
     
-    if (loopCount = maxLoops && !StopRequested && ControlKeyReleased) {
+    if (loopCount = maxLoops && !StopRequested && (actionId == "sequence" || ControlKeyReleased)) {
         StatusText.Text := Format("完成！执行次数：{1:d}。`nFinished! Number of times: {1:d}.", loopCount)
         SoundPlay("*64") ; 播放系统提示音
     }
