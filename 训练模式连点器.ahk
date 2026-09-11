@@ -7,20 +7,21 @@ MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序
 
 
 ; 以管理员身份运行（Run As Administrator）
-if (!A_IsAdmin) {
-    try {
-        Run '*RunAs "' A_ScriptFullPath '"'
-        ExitApp
-    } catch Error as e {
-        MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
-    }
-}
+; if (!A_IsAdmin) {
+;     try {
+;         Run '*RunAs "' A_ScriptFullPath '"'
+;         ExitApp
+;     } catch Error as e {
+;         MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
+;     }
+; }
 
 ; 初始化全局变量（Initialize the global variable）
 maxLoops := 1980 ; 重复次数（Repetition times）
 interval := 0 ; 命令执行间隔（Command execution interval）
 stopKey := "#s" ; 停止热键（Stop hotkey）
 Hotkey(stopKey, StopAction, "On")
+keySeq := [] ; 按键序列。每个元素是一个数组；每个数组的第一个元素是按键代码，第二个元素是按键的字符串表示（Key sequence. Each element is an array; the first element of each array is key code, and the second element is the string representation of the key to press）
 
 MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
 MyGui.SetFont("s12 bold", "Microsoft YaHei")
@@ -52,8 +53,16 @@ CheckBox3 := MyGui.Add("Checkbox", "w60 xp yp+30", "Alt")
 MyGui.Add("Text", "w220 r2 x+10 yp-60", "请输入单键：`nPlease input a single key:")
 KeyEdit := MyGui.Add("Edit", "w200 xp y+0")
 ActionButton_custom := MyGui.Add("Button", "w100 x+10 yp center", "执行/Run")
+MyGui.Add("Text", "w160 r2 x" MyGui.MarginX " y+15 center", "序列循环`nSequence Loop")
+PushButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "入栈/Push")
+PushButton_custom.OnEvent("Click", PushSequence)
+PopButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "出栈/Pop")
+PopButton_custom.OnEvent("Click", PopSequence)
+ClearButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "清空/Clear")
+ClearButton_custom.OnEvent("Click", ClearSequence)
+RunSequenceButton := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 150 " y+10 center", "运行序列`nRun Sequence")
 
-MyGui.Add("Text", "w500 x" MyGui.MarginX " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
+MyGui.Add("Text", "w500 x" MyGui.MarginX " y+15 0x10") ; 添加水平分隔线（Add horizontal separator）
 
 StopButton := MyGui.Add("Button", "w150 r2 xp+175 yp+10 Disabled", "强制停止`nForce to stop")
 StopButton.OnEvent("Click", StopAction)
@@ -107,10 +116,16 @@ ProgressBar := MyGui.Add("Progress", "w450 h20 x" MyGui.MarginX + 25 " Range0-10
 
 MyGui.Add("Button", "w120 h30 x" MyGui.MarginX + 190 " Center", "退出/Quit").OnEvent("Click", (*) => ExitApp()) ; 添加退出按钮（Add exit button）
 
-; 下面设置右侧的参数部分的控件（In the following, we build the right part - parameter part）
-MyGui.Add("Text", "h680 x" MyGui.MarginX + 500 " y" MyGui.MarginY + 5 " 0x11") ; 添加垂直分隔线（Add vertical separator）
+; 下面设置中间的按键序列控件（In the following, we build the middle part - key sequence part）
+MyGui.Add("Text", "h800 x" MyGui.MarginX + 500 " y" MyGui.MarginY + 5 " 0x11") ; 添加垂直分隔线；左侧宽度为500（Add vertical separator; the width of the left part is 500）
 
-MyGui.Add("Text", "w600 r2 xp+" MyGui.MarginX " Center y" MyGui.MarginY + 5, "参数设置`nParameter configuration") ; 这里加上MyGui.MarginX是将分隔线视为一个边界，而控件应尽量离边界一些距离。而且这里需要注意一定要设置绝对纵坐标，否则下一个控件会直接从分隔线的底部开始创建（That`MyGui.MarginX` is added is because the separator is considered as a border, and the controls should leave some distance from it. Besides, note here an absolute y must be set, otherwise the next control element will be created from the bottom of the vertical separator）
+MyGui.Add("Text", "w300 x" MyGui.MarginX * 3 + 500 " y" MyGui.MarginY + 5 " Center", "按键序列`nKey sequence")
+SequenceList := MyGui.Add("ListView", "w300 h700 x" MyGui.MarginX * 3 + 500 " y+10", ["行号|Index", "按键|Key"])
+
+; 下面设置右侧的参数部分的控件（In the following, we build the right part - parameter part）
+MyGui.Add("Text", "h800 x" MyGui.MarginX * 5 + 800 " y" MyGui.MarginY + 5 " 0x11") ; 添加垂直分隔线；中间宽度为300（Add vertical separator; the width of the middle part is 300）
+
+MyGui.Add("Text", "w750 r2 xp+" MyGui.MarginX " Center y" MyGui.MarginY + 5, "参数设置`nParameter Configuration") ; 这里加上MyGui.MarginX是将分隔线视为一个边界，而控件应尽量离边界一些距离。而且这里需要注意一定要设置绝对纵坐标，否则下一个控件会直接从分隔线的底部开始创建（That`MyGui.MarginX` is added is because the separator is considered as a border, and the controls should leave some distance from it. Besides, note here an absolute y must be set, otherwise the next control element will be created from the bottom of the vertical separator）
 
 ;; 添加重复次数设置区域（Add repetition area）
 MyGui.Add("Text", "w200", "重复次数/Repetition：")
@@ -125,7 +140,7 @@ Repeat_ResetButton := MyGui.Add("Button", "w120 x+10 yp Center", "远程复位`n
 Repeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(true))
 
 ;; 添加命令执行间隔设置区域（Add command execution interval area）
-MyGui.Add("Text", "w200 x" MyGui.MarginX * 2 + 500 " y+20", "间隔/Interval：") ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
+MyGui.Add("Text", "w200 x" MyGui.MarginX * 6 + 800 " y+20", "间隔/Interval：") ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
 IntervalEdit := MyGui.Add("Edit", "w80 Number x+0", interval)
 Interval_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
 Interval_UpdateButton.OnEvent("Click", UpdateInterval)
@@ -135,7 +150,7 @@ Interval_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Rese
 Interval_ResetButton.OnEvent("Click", ResetInterval)
 
 ;; 添加全局快捷键禁用设置（Add the hotkey to abort key press）
-MyGui.Add("Text", "w200 x" MyGui.MarginX * 2 + 500 " y+20", "中止热键/Abort Hotkey：")
+MyGui.Add("Text", "w200 x" MyGui.MarginX * 6 + 800 " y+20", "中止热键/Abort Hotkey：")
 StopKeyEdit := MyGui.Add("Edit", "w80 x+0", stopKey)
 StopKey_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
 StopKey_UpdateButton.OnEvent("Click", UpdateStopKey)
@@ -145,13 +160,13 @@ StopKey_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset
 StopKey_ResetButton.OnEvent("Click", ResetStopKey)
 
 ;; 添加全参数复位按钮（Add all parameter reset button）
-AllParameter_ResetButton := MyGui.Add("Button", "w180 x" MyGui.MarginX * 2 + 500 + 200 + 80 + 10 " y+20 Center", "复位全部变量`nReset all parameters")
+AllParameter_ResetButton := MyGui.Add("Button", "w180 x" MyGui.MarginX * 6 + 800 + 200 + 80 + 10 " y+20 Center", "复位全部变量`nReset all parameters")
 AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
 
 ;; 添加按键格式说明文本（Add key format instruction text）
-MyGui.Add("Text", "w780 x" MyGui.MarginX + 500 + 5 " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
+MyGui.Add("Text", "w780 x" MyGui.MarginX * 5 + 800 + 5 " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
 
-MyGui.Add("Text", "w730 x" MyGui.MarginX * 2 + 500 " y+0", "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/")
+MyGui.Add("Text", "w730 x" MyGui.MarginX * 6 + 800 " y+0", "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/")
 
 ;; 设置按钮松开鼠标的事件（Set the button on-release event）
 ActionButton_incgold.OnEvent("Click", (*) => StartAction("incgold"))
@@ -335,7 +350,7 @@ StartAction(actionId, *) {
 }
 
 StartCustom(*) {
-    global CheckBox1, CheckBox2, CheckBox3, KeyEdit
+    global KeyEdit, CheckBox1, CheckBox2, CheckBox3
     
     ; 首先检查单键输入是否合法（First check whether the single key input is valid）
     inputKey := KeyEdit.Value
@@ -477,4 +492,54 @@ ResetAllParameters(*) {
     ResetInterval()
     ResetStopKey()
     StatusText.Text := "所有变量已复位。`nAll parameters have been reset."
+}
+
+; 按键序列操作（Key sequence operations）
+PushSequence(*) {
+    global keyEdit, CheckBox1, CheckBox2, CheckBox3, keySeq, SequenceList
+    ; 校验单键（Verify the single key）
+    inputKey := KeyEdit.Value
+    if (StrLen(inputKey) = 0) {
+        StatusText.Text := "请输入一个有效的单键。`nPlease input a valid single key."
+        return 1
+    }
+    else If (not GetKeyVK(inputKey)) {
+        StatusText.Text := "无效单键。`nInvalid single key."
+        return 1
+    }
+    ; 构建按键代码和按键字符串（Construct key code and key string）
+    seqCode := "{" inputKey "}"
+    seqStr := inputKey
+    if CheckBox2.Value {
+        seqCode := "{Shift Down}" seqCode "{Shift Up}"
+        seqStr := "Shift+" seqStr
+    }
+    if CheckBox3.Value {
+        seqCode := "{Alt Down}" seqCode "{Alt Up}"
+        seqStr := "Alt+" seqStr
+    }
+    if CheckBox1.Value {
+        seqCode := "{Ctrl Down}" seqCode "{Ctrl Up}"
+        seqStr := "Ctrl+" seqStr
+    }
+    if (keySeq.Length == 0 or seqCode != keySeq[-1][1]) {
+        ; 修改数据结构（Edit data structure）
+        keySeq.Push([seqCode, seqStr])
+        ; 展示结果（Display the result）
+        SequenceList.Add("", keySeq.Length, seqStr)
+    }
+}
+
+PopSequence(*) {
+    global keySeq, SequenceList
+    if keySeq.Length > 0 {
+        SequenceList.Delete(keySeq.Length)
+        keySeq.Pop()
+    }
+}
+
+ClearSequence(*) {
+    global keySeq
+    keySeq.Length := 0
+    SequenceList.Delete()
 }
