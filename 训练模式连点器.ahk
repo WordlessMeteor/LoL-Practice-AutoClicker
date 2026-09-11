@@ -103,6 +103,11 @@ ActionConfigs["custom"]["ControlKeys"] := []
 ActionConfigs["custom"]["Key"] := ""
 ActionConfigs["custom"]["Button"] := ActionButton_custom
 ActionConfigs["custom"]["Description"] := "自定义/Custom"
+ActionConfigs["sequence"] := Map()
+; ActionConfigs["sequence"]["ControlKeys"] := []
+; ActionConfigs["sequence"]["Key"] := ""
+ActionConfigs["sequence"]["Button"] := RunSequenceButton
+ActionConfigs["sequence"]["Description"] := "序列循环/Sequence Loop"
 
 BasicAttackNeeded_Actions := Map() ; 用于普通攻击型功能的输出提示（Used for output hint of basic attack based cheats）
 BasicAttackNeeded_Actions["incunit100health"] := true
@@ -194,22 +199,11 @@ StopRequested := false
 ; 按钮点击事件——开始执行（Click event - Start action）
 StartAction(actionId, *) {
     global IsRunning, StopRequested
-    
     config := ActionConfigs[actionId]
-    controlKeys := config["ControlKeys"]
-    keyToSend := "{" config["Key"] "}"
-    startBtn := config["Button"]
-    actionDesc := config["Description"]
-    
-    keyToHold := ""
-    keyToRelease := ""
-    for key in controlKeys {
-        keyToHold := keyToHold "{" key " Down}"
-        keyToRelease := "{" key " Up}" keyToRelease
-    }
     
     ; 控制标志（Control flags）
-    startBtn.Enabled := false   ; 禁用开始按钮（Disable the start button）
+    startBtn := config["Button"]
+    startBtn.Enabled := false       ; 禁用开始按钮（Disable the start button）
     StopButton.Enabled := true      ; 启用停止按钮（Enable stop button）
     StopRequested := false          ; 标记用户是否发送了停止的请求。按下停止按钮时，该变量置为真（Marks whether the user has send the stop request. By clicking the stop button, this variable is set as true）
     
@@ -264,6 +258,15 @@ StartAction(actionId, *) {
         return 2
     }
     
+    ; 准备按键（Prepare keys to press）
+    controlKeys := config["ControlKeys"]
+    keyToHold := ""
+    keyToRelease := ""
+    for key in controlKeys {
+        keyToHold := keyToHold "{" key " Down}"
+        keyToRelease := "{" key " Up}" keyToRelease
+    }
+    
     ; 按下控制键（Press control keys）
     try {
         Send(keyToHold)
@@ -275,6 +278,8 @@ StartAction(actionId, *) {
         return 3
     }
     
+    ; 按下单键（Press the single key）
+    keyToSend := "{" config["Key"] "}"
     Loop maxLoops {
         ; 检查停止请求（Check stop request）
         if StopRequested {
@@ -496,7 +501,6 @@ ResetAllParameters(*) {
 
 ; 按键序列操作（Key sequence operations）
 PushSequence(*) {
-    global keyEdit, CheckBox1, CheckBox2, CheckBox3, keySeq, SequenceList
     ; 校验单键（Verify the single key）
     inputKey := KeyEdit.Value
     if (StrLen(inputKey) = 0) {
@@ -522,7 +526,7 @@ PushSequence(*) {
         seqCode := "{Ctrl Down}" seqCode "{Ctrl Up}"
         seqStr := "Ctrl+" seqStr
     }
-    if (keySeq.Length == 0 or seqCode != keySeq[-1][1]) {
+    if (keySeq.Length == 0 or seqCode != keySeq[-1][1]) { ; 相同的按键不允许相邻排列（Repeated key combinations aren't allowed to be placed next to each other）
         ; 修改数据结构（Edit data structure）
         keySeq.Push([seqCode, seqStr])
         ; 展示结果（Display the result）
@@ -531,7 +535,6 @@ PushSequence(*) {
 }
 
 PopSequence(*) {
-    global keySeq, SequenceList
     if keySeq.Length > 0 {
         SequenceList.Delete(keySeq.Length)
         keySeq.Pop()
@@ -539,7 +542,6 @@ PopSequence(*) {
 }
 
 ClearSequence(*) {
-    global keySeq
     keySeq.Length := 0
     SequenceList.Delete()
 }
