@@ -16,36 +16,42 @@ if (!A_IsAdmin) {
     }
 }
 
-; 初始化全局变量（Initialize the global variable）
+; 初始化全局变量（Initialize global variables）
 maxLoops := 1980 ; 重复次数（Repetition times）
 interval := 0 ; 命令执行间隔（Command execution interval）
 stopKey := "#s" ; 停止热键（Stop hotkey）
 Hotkey(stopKey, StopAction, "On")
 keySeq := [] ; 按键序列。每个元素是一个数组；每个数组的第一个元素是按键代码，第二个元素是按键的字符串表示（Key sequence. Each element is an array; the first element of each array is key code, and the second element is the string representation of the key to press）
+IsRunning := false ; 标记是否在执行某个功能（Mark whether a function is being performed）
+StopRequested := false ; 标记用户是否请求中止（Mark whether the user has requested to abort）
+BasicAttackNeeded_Actions := Map() ; 用于普通攻击型功能的输出提示（Used for output hint of basic attack based cheats）
+BasicAttackNeeded_Actions["incunit100health"] := true
+BasicAttackNeeded_Actions["decunit100health"] := true
+BasicAttackNeeded_Actions["incunit10resistance"] := true
+BasicAttackNeeded_Actions["decunit10resistance"] := true
 
+; 下面设置图形化界面（Set the graphical user interface）
+;; 标题（Title）
 MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
 MyGui.SetFont("s12 bold", "Microsoft YaHei")
 MyGui.Title := "训练模式连点器 | Practice AutoClicker"
-
-; 整个界面的左侧是事件部分，右侧是参数部分（In the whole interface, the left part is the event part, and the right part is the parameter part）
-; 下面设置左侧的事件部分的控件（In the following, we build the left part - event part）
-;; 添加描述（Add descriptions）
+;; 左侧——按键部分（Left part - key press part）
+;;; 声明（Declaration）
 MyGui.Add("Text", "w500 Center", "《英雄联盟》训练模式按键辅助工具`nLeague of Legends Practice Tool Key Press Assistant")
 MyGui.Add("Text", "w500 Center", "请在训练模式中使用，违者后果自负。`nPlease run this program in Practice Tool.`nViolators shall bear the result by themselves.")
-
+;;; 左侧第一分隔线（First separator of the left part）
 MyGui.Add("Text", "w500 0x10") ; 添加水平分隔线。此处表明整个图形化界面的左侧宽度是500像素（Add horizontal separator. Here it shows the width of the left side is 500 digits）
-
-;; 添加动作按钮（Add action buttons）
+;;; 动作按钮（Action buttons）
 ActionButton_incgold := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 25 " yp+10 center", "增加金钱`nAdd Gold") ; 确保指定绝对坐标时维持全局偏移（Ensure when specifying the absolute coordinates, maintain the global offset）
 ActionButton_inclevel := MyGui.Add("Button", "w200 r2 x+50 yp center", "升级`nLevel Up")
 ActionButton_incunit100health := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 25 " center", "添加100最大生命值`nAdd 100 Max HP")
 ActionButton_decunit100health := MyGui.Add("Button", "w200 r2 x+50 yp center", "移除100最大生命值`nRemove 100 Max HP")
 ActionButton_incunit10resistance := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 25 " center", "添加10双抗`nAdd 10 Resistances")
 ActionButton_decunit10resistance := MyGui.Add("Button", "w200 r2 x+50 yp center", "移除10双抗`nRemove 10 Resistances")
-
-MyGui.Add("Text", "w500 x" MyGui.MarginX " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
-
-;; 添加自定义控制按钮（Add custom control buttons）
+;;; 左侧第二分隔线（Second separator of the left part）
+MyGui.Add("Text", "w500 x" MyGui.MarginX " y+10 0x10")
+;;; 自定义控制按钮（Custom control buttons）
+;;;; 自定义（Custom）
 MyGui.Add("Text", "w100 r2 x" MyGui.MarginX " y+15 center", "自定义`nCustom")
 CheckBox1 := MyGui.Add("Checkbox", "w60 x+0 yp-15", "Ctrl")
 CheckBox2 := MyGui.Add("Checkbox", "w60 xp yp+30", "Shift")
@@ -53,21 +59,59 @@ CheckBox3 := MyGui.Add("Checkbox", "w60 xp yp+30", "Alt")
 MyGui.Add("Text", "w220 r2 x+10 yp-60", "请输入单键：`nPlease input a single key:")
 KeyEdit := MyGui.Add("Edit", "w200 xp y+0")
 ActionButton_custom := MyGui.Add("Button", "w100 x+10 yp center", "执行/Run")
+;;;; 序列循环（Sequence loop）
 MyGui.Add("Text", "w160 r2 x" MyGui.MarginX " y+15 center", "序列循环`nSequence Loop")
 PushButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "入栈/Push")
-PushButton_custom.OnEvent("Click", PushSequence)
 PopButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "出栈/Pop")
-PopButton_custom.OnEvent("Click", PopSequence)
 ClearButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "清空/Clear")
-ClearButton_custom.OnEvent("Click", ClearSequence)
 RunSequenceButton := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 150 " y+10 center", "运行序列`nRun Sequence")
-RunSequenceButton.OnEvent("Click", (*) => StartAction("sequence"))
-
-MyGui.Add("Text", "w500 x" MyGui.MarginX " y+15 0x10") ; 添加水平分隔线（Add horizontal separator）
-
+;;; 左侧第三分隔线（Third separator of the left part）
+MyGui.Add("Text", "w500 x" MyGui.MarginX " y+15 0x10")
+;;; 状态栏（Status section）
 StopButton := MyGui.Add("Button", "w150 r2 xp+175 yp+10 Disabled", "强制停止`nForce to stop")
-StopButton.OnEvent("Click", StopAction)
+;;;; 状态视觉元素（Status visual elements）
+StatusText := MyGui.Add("Text", "w500 r2 x" MyGui.MarginX " Center", "就绪——等待开始……`nReady - Awaiting to start ...") ; 添加状态显示（Add status display）
+ProgressBar := MyGui.Add("Progress", "w450 h20 x" MyGui.MarginX + 25 " Range0-100 -Smooth", 0) ; 添加一个隐藏的进度条，用于视觉反馈（Add a hidden progress bar for visual feedback）
+;;; 退出按钮（Exit button）
+MyGui.Add("Button", "w120 h30 x" MyGui.MarginX + 190 " Center", "退出/Quit").OnEvent("Click", (*) => ExitApp()) ; 添加退出按钮（Add exit button）
+;; 第一垂直分隔线（First vertical separator）
+MyGui.Add("Text", "h800 x" MyGui.MarginX + 500 " y" MyGui.MarginY + 5 " 0x11")
+;; 中间——按键序列（Middle part - key sequence）
+MyGui.Add("Text", "w300 x" MyGui.MarginX * 3 + 500 " y" MyGui.MarginY + 5 " Center", "按键序列`nKey Sequence")
+SequenceList := MyGui.Add("ListView", "w300 h700 x" MyGui.MarginX * 3 + 500 " y+10", ["行号|Index", "按键|Key"])
+;; 第二垂直分隔线（Second vertical separator）
+MyGui.Add("Text", "h800 x" MyGui.MarginX * 5 + 800 " y" MyGui.MarginY + 5 " 0x11")
+;; 右侧——参数配置（Right part - parameter configuration）
+;;; 标题（Title）
+MyGui.Add("Text", "w750 r2 xp+" MyGui.MarginX " Center y" MyGui.MarginY + 5, "参数设置`nParameter Configuration") ; 这里加上MyGui.MarginX是将分隔线视为一个边界，而控件应尽量离边界一些距离。而且这里需要注意一定要设置绝对纵坐标，否则下一个控件会直接从分隔线的底部开始创建（That`MyGui.MarginX` is added is because the separator is considered as a border, and the controls should leave some distance from it. Besides, note here an absolute y must be set, otherwise the next control element will be created from the bottom of the vertical separator）
+;;; 重复次数（Repetition）
+MyGui.Add("Text", "w200", "重复次数/Repetition：")
+LoopEdit := MyGui.Add("Edit", "w80 Number x+0", maxLoops) ; Number属性限制数字输入（"Number" restricts the input type）
+Repeat_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
+RepeatNumber_text := MyGui.Add("Text", "w90 x+10 yp+5", "") ; 微移文本框纵坐标，使得视觉上垂直居中（Shift the text vertical coordinate to make it vertically centered in vision）
+MeleeRepeat_ResetButton := MyGui.Add("Button", "w120 x+0 yp-15 Center", "近战复位`nMelee Reset")
+RangedRepeat_ResetButton := MyGui.Add("Button", "w120 x+10 yp Center", "远程复位`nRanged Reset")
+;;; 命令执行间隔（Command execution interval）
+MyGui.Add("Text", "w200 x" MyGui.MarginX * 6 + 800 " y+20", "间隔/Interval：") ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
+IntervalEdit := MyGui.Add("Edit", "w80 Number x+0", interval)
+Interval_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
+Interval_text := MyGui.Add("Text", "w90 x+10 yp+5", "")
+Interval_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset")
+;;; 全局快捷键禁用（Hotkey to abort key press）
+MyGui.Add("Text", "w200 x" MyGui.MarginX * 6 + 800 " y+20", "中止热键/Abort Hotkey：")
+StopKeyEdit := MyGui.Add("Edit", "w80 x+0", stopKey)
+StopKey_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
+StopKey_text := MyGui.Add("Text", "w90 x+10 yp+5", "")
+StopKey_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset")
+;;; 全参数复位按钮（Button to reset all parameters）
+AllParameter_ResetButton := MyGui.Add("Button", "w180 x" MyGui.MarginX * 6 + 800 + 200 + 80 + 10 " y+20 Center", "复位全部变量`nReset all parameters")
+AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
+;; 右侧第一分隔线（First separator of the left part）
+MyGui.Add("Text", "w780 x" MyGui.MarginX * 5 + 800 + 5 " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
+;; 按键格式说明文本（Key format instruction text）
+MyGui.Add("Text", "w730 x" MyGui.MarginX * 6 + 800 " y+0", "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/")
 
+; 动作配置（Action config）
 ActionConfigs := Map() ; 设置用于StartAction的动作配置表（Set up an action config table for StartAction process）
 ActionConfigs["incgold"] := Map() ; 每个动作也是一个Map对象，分别包含要按下的控制键、按键、要松开的控制键、按钮对象和描述（Each action is also a Map object, containing the control keys to press, the key, the control keys to release, the button object and the description）
 ActionConfigs["incgold"]["ControlKeys"] := ["Shift"] ; 表明要被持续按住的键（Indicates the key to be held down）
@@ -110,71 +154,8 @@ ActionConfigs["sequence"] := Map()
 ActionConfigs["sequence"]["Button"] := RunSequenceButton
 ActionConfigs["sequence"]["Description"] := "序列循环/Sequence Loop"
 
-BasicAttackNeeded_Actions := Map() ; 用于普通攻击型功能的输出提示（Used for output hint of basic attack based cheats）
-BasicAttackNeeded_Actions["incunit100health"] := true
-BasicAttackNeeded_Actions["decunit100health"] := true
-BasicAttackNeeded_Actions["incunit10resistance"] := true
-BasicAttackNeeded_Actions["decunit10resistance"] := true
-
-;; 状态视觉元素（Status visual elements）
-StatusText := MyGui.Add("Text", "w500 r2 x" MyGui.MarginX " Center", "就绪——等待开始……`nReady - Awaiting to start ...") ; 添加状态显示（Add status display）
-ProgressBar := MyGui.Add("Progress", "w450 h20 x" MyGui.MarginX + 25 " Range0-100 -Smooth", 0) ; 添加一个隐藏的进度条，用于视觉反馈（Added a hidden progress bar for visual feedback）
-
-MyGui.Add("Button", "w120 h30 x" MyGui.MarginX + 190 " Center", "退出/Quit").OnEvent("Click", (*) => ExitApp()) ; 添加退出按钮（Add exit button）
-
-; 下面设置中间的按键序列控件（In the following, we build the middle part - key sequence part）
-MyGui.Add("Text", "h800 x" MyGui.MarginX + 500 " y" MyGui.MarginY + 5 " 0x11") ; 添加垂直分隔线；左侧宽度为500（Add vertical separator; the width of the left part is 500）
-
-MyGui.Add("Text", "w300 x" MyGui.MarginX * 3 + 500 " y" MyGui.MarginY + 5 " Center", "按键序列`nKey sequence")
-SequenceList := MyGui.Add("ListView", "w300 h700 x" MyGui.MarginX * 3 + 500 " y+10", ["行号|Index", "按键|Key"])
-
-; 下面设置右侧的参数部分的控件（In the following, we build the right part - parameter part）
-MyGui.Add("Text", "h800 x" MyGui.MarginX * 5 + 800 " y" MyGui.MarginY + 5 " 0x11") ; 添加垂直分隔线；中间宽度为300（Add vertical separator; the width of the middle part is 300）
-
-MyGui.Add("Text", "w750 r2 xp+" MyGui.MarginX " Center y" MyGui.MarginY + 5, "参数设置`nParameter Configuration") ; 这里加上MyGui.MarginX是将分隔线视为一个边界，而控件应尽量离边界一些距离。而且这里需要注意一定要设置绝对纵坐标，否则下一个控件会直接从分隔线的底部开始创建（That`MyGui.MarginX` is added is because the separator is considered as a border, and the controls should leave some distance from it. Besides, note here an absolute y must be set, otherwise the next control element will be created from the bottom of the vertical separator）
-
-;; 添加重复次数设置区域（Add repetition area）
-MyGui.Add("Text", "w200", "重复次数/Repetition：")
-LoopEdit := MyGui.Add("Edit", "w80 Number x+0", maxLoops) ; Number属性限制数字输入（"Number" restricts the input type）
-Repeat_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
-Repeat_UpdateButton.OnEvent("Click", UpdateLoopCount)
-RepeatNumber_text := MyGui.Add("Text", "w90 x+10 yp+5", "") ; 微移文本框纵坐标，使得视觉上垂直居中（Shift the text vertical coordinate to make it vertically centered in vision）
-UpdateRepetitionText(maxLoops)
-Repeat_ResetButton := MyGui.Add("Button", "w120 x+0 yp-15 Center", "近战复位`nMelee Reset")
-Repeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(false))
-Repeat_ResetButton := MyGui.Add("Button", "w120 x+10 yp Center", "远程复位`nRanged Reset")
-Repeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(true))
-
-;; 添加命令执行间隔设置区域（Add command execution interval area）
-MyGui.Add("Text", "w200 x" MyGui.MarginX * 6 + 800 " y+20", "间隔/Interval：") ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
-IntervalEdit := MyGui.Add("Edit", "w80 Number x+0", interval)
-Interval_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
-Interval_UpdateButton.OnEvent("Click", UpdateInterval)
-Interval_text := MyGui.Add("Text", "w90 x+10 yp+5", "")
-UpdateIntervalText(interval)
-Interval_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset")
-Interval_ResetButton.OnEvent("Click", ResetInterval)
-
-;; 添加全局快捷键禁用设置（Add the hotkey to abort key press）
-MyGui.Add("Text", "w200 x" MyGui.MarginX * 6 + 800 " y+20", "中止热键/Abort Hotkey：")
-StopKeyEdit := MyGui.Add("Edit", "w80 x+0", stopKey)
-StopKey_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
-StopKey_UpdateButton.OnEvent("Click", UpdateStopKey)
-StopKey_text := MyGui.Add("Text", "w90 x+10 yp+5", "")
-UpdateStopKeyText(stopKey)
-StopKey_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset")
-StopKey_ResetButton.OnEvent("Click", ResetStopKey)
-
-;; 添加全参数复位按钮（Add all parameter reset button）
-AllParameter_ResetButton := MyGui.Add("Button", "w180 x" MyGui.MarginX * 6 + 800 + 200 + 80 + 10 " y+20 Center", "复位全部变量`nReset all parameters")
-AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
-
-;; 添加按键格式说明文本（Add key format instruction text）
-MyGui.Add("Text", "w780 x" MyGui.MarginX * 5 + 800 + 5 " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
-
-MyGui.Add("Text", "w730 x" MyGui.MarginX * 6 + 800 " y+0", "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/")
-
-;; 设置按钮松开鼠标的事件（Set the button on-release event）
+; 为按钮绑定事件（Bind events to buttons）
+;; 动作按钮（Action buttons）
 ActionButton_incgold.OnEvent("Click", (*) => StartAction("incgold"))
 ActionButton_inclevel.OnEvent("Click", (*) => StartAction("inclevel"))
 ActionButton_incunit100health.OnEvent("Click", (*) => StartAction("incunit100health"))
@@ -182,20 +163,36 @@ ActionButton_decunit100health.OnEvent("Click", (*) => StartAction("decunit100hea
 ActionButton_incunit10resistance.OnEvent("Click", (*) => StartAction("incunit10resistance"))
 ActionButton_decunit10resistance.OnEvent("Click", (*) => StartAction("decunit10resistance"))
 ActionButton_custom.OnEvent("Click", (*) => StartCustom())
-
-; 设置窗口关闭和Esc键事件（Set windows close event）
+;; 按键序列操作（Key sequence operations）
+PushButton_custom.OnEvent("Click", PushSequence)
+PopButton_custom.OnEvent("Click", PopSequence)
+ClearButton_custom.OnEvent("Click", ClearSequence)
+RunSequenceButton.OnEvent("Click", (*) => StartAction("sequence"))
+;; 退出按钮（Exit button）
+StopButton.OnEvent("Click", StopAction)
+;; 参数设置（Parameter configuration）
+;;; 重复次数（Repetition）
+Repeat_UpdateButton.OnEvent("Click", UpdateLoopCount)
+MeleeRepeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(false))
+RangedRepeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(true))
+;;; 命令执行间隔（Command execution interval）
+Interval_UpdateButton.OnEvent("Click", UpdateInterval)
+Interval_ResetButton.OnEvent("Click", ResetInterval)
+;;; 中止热键（Abort hotkey）
+StopKey_UpdateButton.OnEvent("Click", UpdateStopKey)
+StopKey_ResetButton.OnEvent("Click", ResetStopKey)
+;; 设置窗口关闭和Esc键事件（Set windows close event）
 MyGui.OnEvent("Close", (*) => ExitApp())  ; 点击右上角×（Click on the "×" button on the top-right corner）
 ; MyGui.OnEvent("Escape", (*) => ExitApp()) ; 按Esc键关闭程序。暂时禁用（Press "Esc" to close the app. Temporarily disabled）
 
+; 其它准备工作（Other preparations）
+UpdateRepetitionText(maxLoops)
+UpdateIntervalText(interval)
+UpdateStopKeyText(stopKey)
+SetTitleMatchMode(3) ; 设置窗口名称精确匹配（Set the window to be matched the exact name）
+
 ; 显示界面（Show UI）
 MyGui.Show()
-
-; 设置窗口名称精确匹配（Set the window to be matched the exact name）
-SetTitleMatchMode(3)
-
-; 控制标志（Control flags）
-IsRunning := false
-StopRequested := false
 
 ; 按钮点击事件——开始执行（Click event - Start action）
 StartAction(actionId, *) {
