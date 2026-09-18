@@ -1,20 +1,20 @@
 ﻿#Requires AutoHotkey v2.0
 
-MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序。请确保您是通过以管理员身份运行ahk脚本而不是该脚本编译出来的exe文件来执行此程序，以防杀毒软件误隔离。`nThis program relies on AutoHotKey v2.0. Please make sure you've installed this application. Please make sure you Run the `"ahk`" script instead of the compiled `"exe`" file As Adminstrator, in case the `"exe`" file would be quarantined by any anti-virus software.`n按下Windows+Z以打开AutoHotKey官网。按下Windows+Shift+Z打开AutoHotKey v2官方文档。`nPress Windows + Z to open AutoHotKey official website. Press Windows + Shift + Z to open AutoHotKey v2 official documentation."
+; MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序。请确保您是通过以管理员身份运行ahk脚本而不是该脚本编译出来的exe文件来执行此程序，以防杀毒软件误隔离。`nThis program relies on AutoHotKey v2.0. Please make sure you've installed this application. Please make sure you Run the `"ahk`" script instead of the compiled `"exe`" file As Adminstrator, in case the `"exe`" file would be quarantined by any anti-virus software.`n按下Windows+Z以打开AutoHotKey官网。按下Windows+Shift+Z打开AutoHotKey v2官方文档。`nPress Windows + Z to open AutoHotKey official website. Press Windows + Shift + Z to open AutoHotKey v2 official documentation."
 
 #z::Run("https://www.autohotkey.com") ; Windows+Z本来是调出窗口调节选项的，但其实鼠标悬停在最大化/还原按钮上面就可以调出这个选项（Windows + Z is originally meant to pull out the window adjustment options, but actually one can call it out by simplify moving the mouse cursor to the maximize / restore button）
 #+z::Run("https://www.autohotkey.com/docs/v2/") ; Windows+Shift+Z打开AutoHotKey v2官方文档（Windows + Shift + Z to open AutoHotKey v2 official documentation）
 
 
 ; 以管理员身份运行（Run As Administrator）
-if (!A_IsAdmin) {
-    try {
-        Run '*RunAs "' A_ScriptFullPath '"'
-        ExitApp
-    } catch Error as e {
-        MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
-    }
-}
+; if (!A_IsAdmin) {
+;     try {
+;         Run '*RunAs "' A_ScriptFullPath '"'
+;         ExitApp
+;     } catch Error as e {
+;         MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
+;     }
+; }
 
 ; 初始化全局变量（Initialize global variables）
 maxLoops := 1980 ; 重复次数（Repetition times）
@@ -30,86 +30,365 @@ BasicAttackNeeded_Actions["decunit100health"] := true
 BasicAttackNeeded_Actions["incunit10resistance"] := true
 BasicAttackNeeded_Actions["decunit10resistance"] := true
 
+; 准备一些测量函数（Prepare some measure functions）
+/**
+ * 通过构建临时控件，测量一类控件的高度。<br>Mesure the heigth of a type of controls by creating a temporary control.
+ * @param {String} fontOptions 字体选项，包括字号、粗体、斜体等。<br>Font options, including font size, boldness, italicize, etc.
+ * @param {String} fontName 字体内置名。<br>Font internal name.
+ * @param {Array} ctrlOptions 创建控件时的选项。分别`Gui.Add`方法的三个参数。<br>Options when a control is being created. Act as three parameters of `Gui.Add` method, respectively.
+ * - 控件类型。<br>Control type.
+ * - 图形化界面参数。<br>GUI parameters.
+ * - 文本或其它参数。<br>Text or another parameter.
+ * @returns {Integer} 控件高度。<br>Height of the control.
+ */
+MeasureHeight(fontOptions, fontName, ctrlOptions) {
+    tmpGui := Gui()
+    tmpGui.SetFont(fontOptions, fontName)
+    tmpCtrl := tmpGui.Add(ctrlOptions[1], ctrlOptions[2], ctrlOptions[3])
+    tmpCtrl.GetPos(&X, &Y, &W, &H)
+    tmpGui.Destroy()
+    return H
+}
+/**
+ * 通过构建临时控件，测量一类控件的宽度。<br>Mesure the width of a type of controls by creating a temporary control.
+ * @param {String} fontOptions 字体选项，包括字号、粗体、斜体等。<br>Font options, including font size, boldness, italicize, etc.
+ * @param {String} fontName 字体内置名。<br>Font internal name.
+ * @param {Array} ctrlOptions 创建控件时的选项。分别`Gui.Add`方法的三个参数。<br>Options when a control is being created. Act as three parameters of `Gui.Add` method, respectively.
+ * - 控件类型。<br>Control type.
+ * - 图形化界面参数。<br>GUI parameters.
+ * - 文本或其它参数。<br>Text or another parameter.
+ * @returns {Integer} 控件高度。<br>Height of the control.
+ */
+MeasureWidth(fontOptions, fontName, ctrlOptions) {
+    tmpGui := Gui()
+    tmpGui.SetFont(fontOptions, fontName)
+    tmpCtrl := tmpGui.Add(ctrlOptions[1], ctrlOptions[2], ctrlOptions[3])
+    tmpCtrl.GetPos(&X, &Y, &W, &H)
+    tmpGui.Destroy()
+    return W
+}
+/**
+ * 通过构建临时控件，测量控件的横纵间距。<br>Measure the horizontal and vertical padding between controls by creating a temporary control.
+ * @param {String} fontOptions 字体选项，包括字号、粗体、斜体等。<br>Font options, including font size, boldness, italicize, etc.
+ * @param {String} fontName 字体内置名。<br>Font internal name.
+ */
+MeasurePadding(fontOptions, fontName) {
+    global PadX, PadY
+    tmpGui := Gui()
+    tmpGui.SetFont(fontOptions, fontName)
+    tmpCtrl := tmpGui.Add("Button", "", "")
+    tmpCtrl.GetPos(&PadX, &PadY, &W, &H)
+    tmpGui.Destroy()
+}
+/**
+ * 测量各类控件的高度。<br>Measure the height of all kinds of controls.
+ * @param {String} fontOptions 字体选项，包括字号、粗体、斜体等。<br>Font options, including font size, boldness, italicize, etc.
+ * @param {String} fontName 字体内置名。<br>Font internal name.
+ */
+MeasureAllHeight(fontOptions, fontName) {
+    global H_TEXT_1L, H_TEXT_2L, H_TEXT_3L, H_TEXT_15L, H_HSEPARATOR, H_BUTTON_1L, H_BUTTON_2L, H_CHECKBOX_1L, H_EDIT_1L, H_PROGRESS, H_LISTVIEW
+    H_TEXT_1L := MeasureHeight(fontOptions, fontName, ["Text", "", ""]) ; 含有一行文本的文本框高度（Height of a text box with 1 line of text）
+    H_TEXT_2L := MeasureHeight(fontOptions, fontName, ["Text", "", "`n"]) ; 含有两行文本的文本框高度（Height of a text box with 2 lines of text）
+    H_TEXT_3L := MeasureHeight(fontOptions, fontName, ["Text", "", "`n`n"]) ; 含有三行文本的文本框高度（Height of a text box with 3 lines of text）
+    H_TEXT_15L := MeasureHeight(fontOptions, fontName, ["Text", "", StrReplace(Format("{1:+014}", 0), "0", "`n")]) ; 含有15行文本的文本框高度（Height of a text box with 15 lines of text）
+    H_HSEPARATOR := MeasureHeight(fontOptions, fontName, ["Text", "0x10", ""]) ; 水平分隔符高度（Height of a horizontal separator）
+    H_BUTTON_1L := MeasureHeight(fontOptions, fontName, ["Button", "", ""]) ; 含有一行文本的按钮高度（Height of a button with 1 line of text）
+    H_BUTTON_2L := MeasureHeight(fontOptions, fontName, ["Button", "", "`n"]) ; 含有两行文本的按钮高度（Height of a button with 2 lines of text）
+    H_CHECKBOX_1L := MeasureHeight(fontOptions, fontName, ["Checkbox", "", ""]) ; 含有一行文本的勾选框高度（Height of a checkbox with 1 line of text）
+    H_EDIT_1L := MeasureHeight(fontOptions, fontName, ["Edit", "", ""]) ; 可容纳一行文本的编辑框高度（Height of an edit box that can hold 1 line of text）
+    H_PROGRESS := MeasureHeight(fontOptions, fontName, ["Progress", "", 0]) ; 进度条的高度（Height of a progress bar）
+    H_LISTVIEW := MeasureHeight(fontOptions, fontName, ["ListView", "r26", ["", ""]]) ; 可容纳30条记录的列表的高度（Height of a list that can hold 30 records）
+}
+/**
+ * 测量各类控件的宽度。<br>Measure the width of all kinds of controls.
+ * @param {String} fontOptions 字体选项，包括字号、粗体、斜体等。<br>Font options, including font size, boldness, italicize, etc.
+ * @param {String} fontName 字体内置名。<br>Font internal name.
+ */
+MeasureAllWidth(fontOptions, fontName) {
+    global W_VSEPARATOR
+    W_VSEPARATOR := MeasureWidth(fontOptions, fontName, ["Text", "0x11", ""])
+}
+
+; 下面设置图形化界面的缩放相关常量和参数。这部分思路由DeepSeek V4.1 Flash模型提供（Set GUI scale related constants and parameters. This part is provided by DeepSeek V4.1 Flash model）
+;; 定义用于布局的逻辑单位（Define logic units used for layout）
+BASE_FONT_SIZE := 12 ; 基础字号（Base font size）
+FONT_NAME := "Microsoft YaHei" ; 字体（Font）
+CURRENT_FONT_SIZE := 12 ; 当前字号（Current font size）
+SCALE := CURRENT_FONT_SIZE / BASE_FONT_SIZE ; 缩放比例（Scale ratio）
+FONT_OPTIONS := "s12 bold" ; 字体选项（Font options）
+;; 获取控件的横纵间距（Get the horizontal and vertical gaps between controls）
+MeasurePadding(FONT_OPTIONS, FONT_NAME)
+;; 获取不同控件的逻辑高度（Get the height of different controls）
+MeasureAllHeight(FONT_OPTIONS, FONT_NAME)
+;; 获取不同控件的逻辑宽度（Get the width of different controls）
+MeasureAllWidth(FONT_OPTIONS, FONT_NAME)
+;; 定义单位函数（Define unit functions）
+/**
+ * 计算缩放后的像素数。<br>Calculate scaled pixels.
+ * @param {Integer} n 默认字号下的像素数。<br>Number of pixels under the default font size.
+ * @returns {Float} 缩放后的像素数。<br>Number of pixels after scaling.
+ */
+U(n) {
+    return SCALE * n
+}
+;; 定义字符串常量池（Define stringtable）
+Stringtable := {
+    Title: "训练模式连点器 | Practice AutoClicker",
+    Left: {
+        Declaration: {
+            Text1: "《英雄联盟》训练模式按键辅助工具`nLeague of Legends Practice Tool Key Press Assistant",
+            Text2: "请在训练模式中使用，违者后果自负。`nPlease run this program in Practice Tool.`nViolators shall bear the result by themselves."
+        },
+        Button: {
+            AddGold: "增加金钱`nAdd Gold",
+            LevelUp: "升级`nLevel Up",
+            AddHP: "添加100最大生命值`nAdd 100 Max HP",
+            DecHP: "移除100最大生命值`nRemove 100 Max HP",
+            AddResist: "添加10双抗`nAdd 10 Resistances",
+            DecResist: "移除10双抗`nRemove 10 Resistances"
+        },
+        Custom: {
+            Title: "自定义`nCustom",
+            Checkbox1: "Ctrl",
+            Checkbox2: "Shift",
+            Checkbox3: "Alt",
+            Prompt: "请输入单键：`nPlease input a single key:",
+            RunButton: "执行/Run",
+            SequenceLoop: "序列循环`nSequence Loop",
+            PushButton: "入栈/Push",
+            PopButton: "出栈/Pop",
+            ClearButton: "清空/Clear",
+            RunSequenceButton: "运行序列`nRun Sequence"
+        },
+        Status: {
+            StopButton: "强制停止`nForce to stop",
+            Text: "就绪——等待开始……`nReady - Awaiting to start ...",
+            ExitButton: "退出/Quit"
+        }
+    },
+    Middle: {
+        Title: "按键序列`nKey Sequence",
+        Column1: "行号|Index",
+        Column2: "按键|Key"
+    },
+    Right: {
+        Config: {
+            Title: "参数设置`nParameter Configuration",
+            RepetitionPrompt: "重复次数/Repetition：",
+            IntervalPrompt: "间隔/Interval：",
+            AbortHotkeyPrompt: "中止热键/Abort Hotkey：",
+            UpdateButton: "更新/Update",
+            MeleeResetButton: "近战复位`nMelee Reset",
+            RangedResetButton: "远程复位`nRanged Reset",
+            ResetButton: "复位/Reset",
+            ResetAllButton: "复位全部变量`nReset all parameters"
+        },
+        HelpDoc: "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/"
+    }
+}
+;; 定义配置层（Define config layer）
+Config_default := {
+    ; 区域划分（Area division）
+    Regions: {
+        Left:   {Width: 500, Height: 900},
+        Middle: {Width: 300, Height: 900},
+        Right:  {Width: 750, Height: 900},
+    },
+    
+    ; 每个区域内的控件规格（Control speculation in each area）
+    Left_Controls: {
+        ;                    类型           横坐标   纵坐标                                                                                                           宽度                高度                选项                     文本
+        ;                    Type           X       Y                                                                                                               Width               Height              Options                 Text
+        Title:              ["Text",        0,      PadY,                                                                                                           500,                H_TEXT_2L,          "Center",               Stringtable.Left.Declaration.Text1],
+        Declaration:        ["Text",        0,      PadY * 2 + H_TEXT_2L,                                                                                           500,                H_TEXT_3L,          "Center",               Stringtable.Left.Declaration.Text2],
+        Separator1:         ["Text",        0,      PadY * 3 + H_TEXT_2L + H_TEXT_3L,                                                                               500,                H_HSEPARATOR,       "0x10",                 ""],
+        AddGoldButton:      ["Button",      25,     PadY * 4 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR,                                                                200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddGold],
+        LevelUpButton:      ["Button",      275,    PadY * 4 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR,                                                                200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.LevelUp],
+        AddHPButton:        ["Button",      25,     PadY * 5 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L,                                                  200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddHP],
+        DecHPButton:        ["Button",      275,    PadY * 5 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L,                                                  200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.DecHP],
+        AddResistButton:    ["Button",      25,     PadY * 6 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 2,                                              200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddResist],
+        DecResistButton:    ["Button",      275,    PadY * 6 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 2,                                              200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.DecResist],
+        Separator2:         ["Text",        0,      PadY * 7 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 3,                                              500,                H_HSEPARATOR,       "0x10",                 ""],
+        CustomTitle:        ["Text",        0,      PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + 20,                                     100,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.Title],
+        Checkbox1:          ["Checkbox",    100,    PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3,                                          60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox1],
+        Checkbox2:          ["Checkbox",    100,    PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L,                          60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox2],
+        Checkbox3:          ["Checkbox",    100,    PadY * 10 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 2,                     60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox3],
+        CustomPrompt:       ["Text",        170,    PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3,                                          220,                H_TEXT_2L,          "",                     Stringtable.Left.Custom.Prompt],
+        SingleKeyEdit:      ["Edit",        170,    PadY * 9 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3,                                      220,                H_EDIT_1L,          "",                     ""],
+        SingleKeyRunButton: ["Button",      400,    PadY * 9 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3,                                      100,                H_BUTTON_1L,        "",                     Stringtable.Left.Custom.RunButton],
+        SequenceLoopTitle:  ["Text",        0,      PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                     160,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.SequenceLoop],
+        PushButton:         ["Button",      170,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PushButton],
+        PopButton:          ["Button",      280,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PopButton],
+        ClearButton:        ["Button",      390,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.ClearButton],
+        RunSequenceButton:  ["Button",      150,    PadY * 12 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                 200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Custom.RunSequenceButton],
+        Separator3:         ["Text",        0,      PadY * 13 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                 500,                H_HSEPARATOR,       "0x10",                 ""],
+        StopButton:         ["Button",      175,    PadY * 14 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                 150,                H_BUTTON_2L,        "Center Disabled",      Stringtable.Left.Status.StopButton],
+        StatusText:         ["Text",        0,      PadY * 15 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                 500,                H_TEXT_2L,          "Center",               Stringtable.Left.Status.Text],
+        ProgressBar:        ["Progress",    25,     PadY * 16 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                 450,                H_PROGRESS,         "Range0-100 -Smooth",   ""],
+        ExitButton:         ["Button",      190,    PadY * 17 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3 + H_PROGRESS,    120,                H_BUTTON_1L,        "Center",               Stringtable.Left.Status.ExitButton],
+    },
+    VSeparator1:            ["Text",        0,      PadY,                                                                                                           W_VSEPARATOR,       800,                "0x11",                 ""],
+    Middle_Controls: {
+        ;        类型           横坐标   纵坐标                   宽度                高度         选项        文本
+        ;        Type           X       Y                       Width               Height      Options     Text
+        Title:  ["Text",        0,      PadY,                   300,                H_TEXT_2L,  "Center",   Stringtable.Middle.Title],
+        List:   ["ListView",    0,      PadY * 2 + H_TEXT_2L,   300,                H_LISTVIEW, "Center",   [Stringtable.Middle.Column1, Stringtable.Middle.Column2]]
+    },
+    VSeparator2: ["Text",       0,      PadY,                   W_VSEPARATOR,       800,        "0x11",                 ""],
+    Right_Controls: {
+        ;                                类型           横坐标   纵坐标                                                                               宽度                高度            选项         文本
+        ;                                Type           X       Y                                                                                   Width               Height          Options     Text
+        Title:                          ["Text",        0,      PadY,                                                                               750,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.Title],
+        RepetitionLabel:                ["Text",        0,      PadY * 2 + H_TEXT_2L + 5,                                                           200,                H_TEXT_1L,      "",         Stringtable.Right.Config.RepetitionPrompt],
+        RepetitionEdit:                 ["Edit",        200,    PadY * 2 + H_TEXT_2L,                                                               80,                 H_EDIT_1L,      "Number",   maxLoops], ; Number属性限制数字输入（"Number" restricts the input type）
+        UpdateRepetitionButton:         ["Button",      290,    PadY * 2 + H_TEXT_2L,                                                               120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        RepetitionValue:                ["Text",        420,    PadY * 2 + H_TEXT_2L + 5,                                                           90,                 H_TEXT_1L,      "",         ""],
+        MeleeResetRepetitionButton:     ["Button",      510,    PadY * 2 + H_TEXT_2L - 10,                                                          120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.MeleeResetButton],
+        RangedResetRepetitionButton:    ["Button",      640,    PadY * 2 + H_TEXT_2L - 10,                                                          120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.RangedResetButton],
+        IntervalLabel:                  ["Text",        0,      PadY * 3 + H_TEXT_2L + H_BUTTON_2L + 5,                                             200,                H_TEXT_1L,      "",         Stringtable.Right.Config.IntervalPrompt],
+        IntervalEdit:                   ["Edit",        200,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 80,                 H_EDIT_1L,      "Number",   interval],
+        UpdateIntervalButton:           ["Button",      290,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        IntervalValue:                  ["Text",        420,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L + 5,                                             90,                 H_TEXT_1L,      "",         ""],
+        ResetIntervalButton:            ["Button",      510,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        AbortHotkeyLabel:               ["Text",        0,      PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L + 5,                               200,                H_TEXT_1L,      "",         Stringtable.Right.Config.AbortHotkeyPrompt],
+        AbortHotkeyEdit:                ["Edit",        200,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   80,                 H_EDIT_1L,      "",         stopKey],
+        UpdateAbortHotkeyButton:        ["Button",      290,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        AbortHotkeyValue:               ["Text",        420,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L + 5,                               90,                 H_TEXT_1L,      "",         ""],
+        ResetAbortHotkeyButton:         ["Button",      510,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        ResetAllParameterButton:        ["Button",      285,    PadY * 5 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L * 2,                               180,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.ResetAllButton],
+        Separator:                      ["Text",        0,      PadY * 6 + H_TEXT_2L + H_BUTTON_2L * 2 + H_BUTTON_1L * 2,                           750,                H_HSEPARATOR,   "0x10",     ""],
+        AbortHotkeyHelpDoc:             ["Text",        0,      PadY * 7 + H_TEXT_2L + H_BUTTON_2L * 2 + H_BUTTON_1L * 2 + H_HSEPARATOR,            750,                H_TEXT_15L,     "",         Stringtable.Right.HelpDoc],
+    }
+}
+;; 控件添加层（Control addition layer）
+/**
+ * 添加控件。<br>Add a control.
+ * @param {Gui} guiObj 一个图形化用户界面对象。<br>A `Gui` object.
+ * @param {Integer} region 区域代号。有以下取值：<br>Region id, which has the following values:
+ * - 1: 左侧。<br>Left part.
+ * - 2: 左侧和中间的垂直分隔线。<br>The vertical separator between the left and middle parts.
+ * - 3: 中间。<br>Middle part.
+ * - 4: 中间和右侧的垂直分隔线。<br>The vertical separator between the middle and right parts.
+ * - 5: 右侧。<br>Right part.
+ * - 6: 右侧以右的部分。如果有任何拓展的话。<br>The right to the right part, if there's any extension.
+ * 
+ * 其它取值会引发值错误。<br>Other values will trigger a ValueError.
+ * @param {array} config 控件配置。由以下部分组成：<br>Control config. Composed of the following parts:
+ * - （字符串）控件类型。<br>(String) Control type.
+ * - （整数）横坐标。<br>(Integer) Horizontal coordinate.
+ * - （整数）纵坐标。<br>(Integer) Vertical coordinate.
+ * - （整数）宽度。<br>(Integer) Width.
+ * - （整数）高度。<br>(Integer) Height.
+ * - （字符串）其它控件选项。<br>(String) Other control options.
+ * - （字符串）控件的初始显示文本。<br>(String) The initial display text of the control.
+ * @returns {Gui.Control} 控件对象。<br>The control object.
+ */
+AddCtrl(guiObj, region, config) {
+    ControlType := config[1]
+    x := config[2]
+    y := config[3]
+    w := config[4]
+    h := config[5]
+    extraOption := config[6]
+    text := config[7]
+    if region == 1
+        XOffset := PadX
+    else if region == 2
+        XOffset := PadX * 2 + Config_default.Regions.Left.Width
+    else if region == 3
+        XOffset := PadX * 3 + Config_default.Regions.Left.Width
+    else if region == 4
+        XOffset := PadX * 4 + Config_default.Regions.Left.Width + Config_default.Regions.Middle.Width
+    else if region == 5
+        XOffset := PadX * 5 + Config_default.Regions.Left.Width + Config_default.Regions.Middle.Width
+    else if region == 6
+        XOffset := PadX * 6 + Config_default.Regions.Left.Width + Config_default.Regions.Middle.Width + Config_default.Regions.Right.Width
+    else
+        throw ValueError("Parameter #2 invalid", -1, region)
+    Options := "w" U(w) " h" U(h) " x" U(XOffset + x) " y" U(y) " " extraOption
+    ctrl := guiObj.Add(ControlType, Options, text)
+    return ctrl
+}
+
 ; 下面设置图形化界面（Set the graphical user interface）
-;; 标题（Title）
 MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
-MyGui.SetFont("s12 bold", "Microsoft YaHei")
-MyGui.Title := "训练模式连点器 | Practice AutoClicker"
+;; 标题（Title）
+MyGui.SetFont(FONT_OPTIONS, FONT_NAME)
+MyGui.Title := Stringtable.Title
 ;; 左侧——按键部分（Left part - key press part）
 ;;; 声明（Declaration）
-MyGui.Add("Text", "w500 Center", "《英雄联盟》训练模式按键辅助工具`nLeague of Legends Practice Tool Key Press Assistant")
-MyGui.Add("Text", "w500 Center", "请在训练模式中使用，违者后果自负。`nPlease run this program in Practice Tool.`nViolators shall bear the result by themselves.")
+AddCtrl(MyGui, 1, Config_default.Left_Controls.Title)
+AddCtrl(MyGui, 1, Config_default.Left_Controls.Declaration)
 ;;; 左侧第一分隔线（First separator of the left part）
-MyGui.Add("Text", "w500 0x10") ; 添加水平分隔线。此处表明整个图形化界面的左侧宽度是500像素（Add horizontal separator. Here it shows the width of the left side is 500 digits）
+AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator1) ; 添加水平分隔线（Add horizontal separator）
 ;;; 动作按钮（Action buttons）
-ActionButton_incgold := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 25 " yp+10 center", "增加金钱`nAdd Gold") ; 确保指定绝对坐标时维持全局偏移（Ensure when specifying the absolute coordinates, maintain the global offset）
-ActionButton_inclevel := MyGui.Add("Button", "w200 r2 x+50 yp center", "升级`nLevel Up")
-ActionButton_incunit100health := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 25 " center", "添加100最大生命值`nAdd 100 Max HP")
-ActionButton_decunit100health := MyGui.Add("Button", "w200 r2 x+50 yp center", "移除100最大生命值`nRemove 100 Max HP")
-ActionButton_incunit10resistance := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 25 " center", "添加10双抗`nAdd 10 Resistances")
-ActionButton_decunit10resistance := MyGui.Add("Button", "w200 r2 x+50 yp center", "移除10双抗`nRemove 10 Resistances")
+ActionButton_incgold := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddGoldButton)
+ActionButton_inclevel := AddCtrl(MyGui, 1, Config_default.Left_Controls.LevelUpButton)
+ActionButton_incunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddHPButton)
+ActionButton_decunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecHPButton)
+ActionButton_incunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddResistButton)
+ActionButton_decunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecResistButton)
 ;;; 左侧第二分隔线（Second separator of the left part）
-MyGui.Add("Text", "w500 x" MyGui.MarginX " y+10 0x10")
+AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator2)
 ;;; 自定义控制按钮（Custom control buttons）
 ;;;; 自定义（Custom）
-MyGui.Add("Text", "w100 r2 x" MyGui.MarginX " y+15 center", "自定义`nCustom")
-CheckBox1 := MyGui.Add("Checkbox", "w60 x+0 yp-15", "Ctrl")
-CheckBox2 := MyGui.Add("Checkbox", "w60 xp yp+30", "Shift")
-CheckBox3 := MyGui.Add("Checkbox", "w60 xp yp+30", "Alt")
-MyGui.Add("Text", "w220 r2 x+10 yp-60", "请输入单键：`nPlease input a single key:")
-KeyEdit := MyGui.Add("Edit", "w200 xp y+0")
-ActionButton_custom := MyGui.Add("Button", "w100 x+10 yp center", "执行/Run")
+AddCtrl(MyGui, 1, Config_default.Left_Controls.CustomTitle)
+CheckBox1 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox1)
+CheckBox2 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox2)
+CheckBox3 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox3)
+AddCtrl(MyGui, 1, Config_default.Left_Controls.CustomPrompt)
+KeyEdit := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyEdit)
+ActionButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyRunButton)
 ;;;; 序列循环（Sequence loop）
-MyGui.Add("Text", "w160 r2 x" MyGui.MarginX " y+15 center", "序列循环`nSequence Loop")
-PushButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "入栈/Push")
-PopButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "出栈/Pop")
-ClearButton_custom := MyGui.Add("Button", "w100 x+10 yp+0 center", "清空/Clear")
-RunSequenceButton := MyGui.Add("Button", "w200 r2 x" MyGui.MarginX + 150 " y+10 center", "运行序列`nRun Sequence")
+AddCtrl(MyGui, 1, Config_default.Left_Controls.SequenceLoopTitle)
+PushButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PushButton)
+PopButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PopButton)
+ClearButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.ClearButton)
+RunSequenceButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.RunSequenceButton)
 ;;; 左侧第三分隔线（Third separator of the left part）
-MyGui.Add("Text", "w500 x" MyGui.MarginX " y+15 0x10")
+AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator3)
 ;;; 状态栏（Status section）
-StopButton := MyGui.Add("Button", "w150 r2 xp+175 yp+10 Disabled", "强制停止`nForce to stop")
+StopButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.StopButton)
 ;;;; 状态视觉元素（Status visual elements）
-StatusText := MyGui.Add("Text", "w500 r2 x" MyGui.MarginX " Center", "就绪——等待开始……`nReady - Awaiting to start ...") ; 添加状态显示（Add status display）
-ProgressBar := MyGui.Add("Progress", "w450 h20 x" MyGui.MarginX + 25 " Range0-100 -Smooth", 0) ; 添加一个隐藏的进度条，用于视觉反馈（Add a hidden progress bar for visual feedback）
+StatusText := AddCtrl(MyGui, 1, Config_default.Left_Controls.StatusText) ; 添加状态显示（Add status display）
+ProgressBar := AddCtrl(MyGui, 1, Config_default.Left_Controls.ProgressBar) ; 添加一个隐藏的进度条，用于视觉反馈（Add a hidden progress bar for visual feedback）
 ;;; 退出按钮（Exit button）
-MyGui.Add("Button", "w120 h30 x" MyGui.MarginX + 190 " Center", "退出/Quit").OnEvent("Click", (*) => ExitApp()) ; 添加退出按钮（Add exit button）
+QuitButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.ExitButton) ; 添加退出按钮（Add exit button）
 ;; 第一垂直分隔线（First vertical separator）
-MyGui.Add("Text", "h800 x" MyGui.MarginX + 500 " y" MyGui.MarginY + 5 " 0x11")
+AddCtrl(MyGui, 2, Config_default.VSeparator1)
 ;; 中间——按键序列（Middle part - key sequence）
-MyGui.Add("Text", "w300 x" MyGui.MarginX * 3 + 500 " y" MyGui.MarginY + 5 " Center", "按键序列`nKey Sequence")
-SequenceList := MyGui.Add("ListView", "w300 h700 x" MyGui.MarginX * 3 + 500 " y+10", ["行号|Index", "按键|Key"])
+AddCtrl(MyGui, 3, Config_default.Middle_Controls.Title)
+SequenceList := AddCtrl(MyGui, 3, Config_default.Middle_Controls.List)
 ;; 第二垂直分隔线（Second vertical separator）
-MyGui.Add("Text", "h800 x" MyGui.MarginX * 5 + 800 " y" MyGui.MarginY + 5 " 0x11")
+AddCtrl(MyGui, 4, Config_default.VSeparator2)
 ;; 右侧——参数配置（Right part - parameter configuration）
 ;;; 标题（Title）
-MyGui.Add("Text", "w750 r2 xp+" MyGui.MarginX " Center y" MyGui.MarginY + 5, "参数设置`nParameter Configuration") ; 这里加上MyGui.MarginX是将分隔线视为一个边界，而控件应尽量离边界一些距离。而且这里需要注意一定要设置绝对纵坐标，否则下一个控件会直接从分隔线的底部开始创建（That`MyGui.MarginX` is added is because the separator is considered as a border, and the controls should leave some distance from it. Besides, note here an absolute y must be set, otherwise the next control element will be created from the bottom of the vertical separator）
+AddCtrl(MyGui, 5, Config_default.Right_Controls.Title)
 ;;; 重复次数（Repetition）
-MyGui.Add("Text", "w200", "重复次数/Repetition：")
-LoopEdit := MyGui.Add("Edit", "w80 Number x+0", maxLoops) ; Number属性限制数字输入（"Number" restricts the input type）
-Repeat_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
-RepeatNumber_text := MyGui.Add("Text", "w90 x+10 yp+5", "") ; 微移文本框纵坐标，使得视觉上垂直居中（Shift the text vertical coordinate to make it vertically centered in vision）
-MeleeRepeat_ResetButton := MyGui.Add("Button", "w120 x+0 yp-15 Center", "近战复位`nMelee Reset")
-RangedRepeat_ResetButton := MyGui.Add("Button", "w120 x+10 yp Center", "远程复位`nRanged Reset")
+AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionLabel)
+LoopEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionEdit)
+Repeat_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateRepetitionButton)
+RepeatNumber_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionValue)
+MeleeRepeat_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.MeleeResetRepetitionButton)
+RangedRepeat_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.RangedResetRepetitionButton)
 ;;; 命令执行间隔（Command execution interval）
-MyGui.Add("Text", "w200 x" MyGui.MarginX * 6 + 800 " y+20", "间隔/Interval：") ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
-IntervalEdit := MyGui.Add("Edit", "w80 Number x+0", interval)
-Interval_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
-Interval_text := MyGui.Add("Text", "w90 x+10 yp+5", "")
-Interval_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset")
+AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalLabel) ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
+IntervalEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalEdit)
+Interval_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateIntervalButton)
+Interval_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalValue)
+Interval_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetIntervalButton)
 ;;; 全局快捷键禁用（Hotkey to abort key press）
-MyGui.Add("Text", "w200 x" MyGui.MarginX * 6 + 800 " y+20", "中止热键/Abort Hotkey：")
-StopKeyEdit := MyGui.Add("Edit", "w80 x+0", stopKey)
-StopKey_UpdateButton := MyGui.Add("Button", "w120 x+10 Center", "更新/Update")
-StopKey_text := MyGui.Add("Text", "w90 x+10 yp+5", "")
-StopKey_ResetButton := MyGui.Add("Button", "w120 x+0 yp-5 Center", "复位/Reset")
+AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyLabel)
+StopKeyEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyEdit)
+StopKey_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateAbortHotkeyButton)
+StopKey_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyValue)
+StopKey_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAbortHotkeyButton)
 ;;; 全参数复位按钮（Button to reset all parameters）
-AllParameter_ResetButton := MyGui.Add("Button", "w180 x" MyGui.MarginX * 6 + 800 + 200 + 80 + 10 " y+20 Center", "复位全部变量`nReset all parameters")
-AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
+AllParameter_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAllParameterButton)
 ;; 右侧第一分隔线（First separator of the left part）
-MyGui.Add("Text", "w780 x" MyGui.MarginX * 5 + 800 + 5 " y+10 0x10") ; 添加水平分隔线（Add horizontal separator）
+AddCtrl(MyGui, 5, Config_default.Right_Controls.Separator) ; 添加水平分隔线（Add horizontal separator）
 ;; 按键格式说明文本（Key format instruction text）
-MyGui.Add("Text", "w730 x" MyGui.MarginX * 6 + 800 " y+0", "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/")
+AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyHelpDoc)
 
 ; 动作配置（Action config）
 ActionConfigs := Map() ; 设置用于StartAction的动作配置表（Set up an action config table for StartAction process）
@@ -170,6 +449,7 @@ ClearButton_custom.OnEvent("Click", ClearSequence)
 RunSequenceButton.OnEvent("Click", (*) => StartAction("sequence"))
 ;; 退出按钮（Exit button）
 StopButton.OnEvent("Click", StopAction)
+QuitButton.OnEvent("Click", (*) => ExitApp())
 ;; 参数设置（Parameter configuration）
 ;;; 重复次数（Repetition）
 Repeat_UpdateButton.OnEvent("Click", UpdateLoopCount)
@@ -181,6 +461,8 @@ Interval_ResetButton.OnEvent("Click", ResetInterval)
 ;;; 中止热键（Abort hotkey）
 StopKey_UpdateButton.OnEvent("Click", UpdateStopKey)
 StopKey_ResetButton.OnEvent("Click", ResetStopKey)
+;;; 全部复位（Reset all）
+AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
 ;; 设置窗口关闭和Esc键事件（Set windows close event）
 MyGui.OnEvent("Close", (*) => ExitApp())  ; 点击右上角×（Click on the "×" button on the top-right corner）
 ; MyGui.OnEvent("Escape", (*) => ExitApp()) ; 按Esc键关闭程序。暂时禁用（Press "Esc" to close the app. Temporarily disabled）
@@ -195,6 +477,18 @@ SetTitleMatchMode(3) ; 设置窗口名称精确匹配（Set the window to be mat
 MyGui.Show()
 
 ; 按钮点击事件——开始执行（Click event - Start action）
+/**
+ * 执行一个动作。<br>Perform an action.
+ * @param {String} actionId 动作代号。有以下取值：<br>Action id, which has the following values:
+ * - incgold: 增加金钱。<br>Add gold.
+ * - inclevel: 升级。<br>Level up.
+ * - incunit100health: 添加100最大生命值。<br>Add 100 max HP.
+ * - decunit100health: 移除100最大生命值。<br>Remove 100 max HP.
+ * - incunit10resistance: 添加10双抗。<br>Add 10 resistances.
+ * - decunit10resistance: 移除10双抗。<br>Remove 10 resistances.
+ * - custom: 自定义单键。<br>Custom single key.
+ * - sequence: 按键序列。<br>Key sequence.
+ */
 StartAction(actionId, *) {
     global IsRunning, StopRequested
     config := ActionConfigs[actionId]
@@ -396,6 +690,9 @@ StartAction(actionId, *) {
     return 0
 }
 
+/**
+ * 循环按下一个自定义单键。<br>Press a custom single key in a loop.
+ */
 StartCustom(*) {
     global KeyEdit, CheckBox1, CheckBox2, CheckBox3
     
@@ -426,6 +723,9 @@ StartCustom(*) {
 }
 
 ; 停止按钮事件（Stop button-triggered event）
+/**
+ * 停止当前循环。<br>Cancel the current loop.
+ */
 StopAction(*) {
     global IsRunning, StopRequested
     if IsRunning {
@@ -435,6 +735,9 @@ StopAction(*) {
 }
 
 ; 更新循环次数的函数（Update the loop count）
+/**
+ * 读取重复次数编辑框并更新重复次数。<br>Read repetition edit box and update repetition.
+ */
 UpdateLoopCount(*) {
     global maxLoops
     inputValue := LoopEdit.Value
@@ -449,10 +752,18 @@ UpdateLoopCount(*) {
         StatusText.Text := "重复次数必须大于0。`nThe number of repetitions must be greater than 0."
 }
 
+/**
+ * 更新重复次数的显示。<br>Update the display of repetition.
+ * @param {Integer} maxLoops 要显示的重复次数。<br>The repetition to display.
+ */
 UpdateRepetitionText(maxLoops) {
     RepeatNumber_text.Text := Format("{1:d}次", maxLoops)
 }
 
+/**
+ * 重置重复次数。<br>Reset repetition.
+ * @param {Integer} ranged 是否应用远程数值。<br>Whether to apply the ranged value.
+ */
 ResetLoopCount(ranged) {
     global maxLoops
     if ranged
@@ -464,6 +775,9 @@ ResetLoopCount(ranged) {
 }
 
 ; 更新命令执行间隔的函数（Update the command execution interval）
+/**
+ * 读取命令执行间隔编辑框并更新命令执行间隔。<br>Read the command execution interval edit box and update command execution interval.
+ */
 UpdateInterval(*) {
     global interval
     inputValue := IntervalEdit.Value
@@ -477,10 +791,17 @@ UpdateInterval(*) {
         StatusText.Text := "命令执行间隔必须大于等于0。`nCommand execution interval must be greater than 0."
 }
 
+/**
+ * 更新命令执行间隔的显示。<br>Update the display of command execution interval.
+ * @param {Integer} interval 要显示的命令执行间隔。单位为毫秒。<br>The command execution interval to display, in milliseconds.
+ */
 UpdateIntervalText(interval) {
     Interval_text.Text := Format("{1:d} ms", interval)
 }
 
+/**
+ * 重置命令执行间隔。<br>Reset the command execution interval.
+ */
 ResetInterval(*) {
     global interval
     interval := 0
@@ -489,6 +810,11 @@ ResetInterval(*) {
 }
 
 ; 更新中止热键的函数（Update the stop hotkey）
+/**
+ * 检查一个热键字符串的语法合法性。<br>Check the grammatical validity of a hotkey string.
+ * @param {String} keyStr 热键字符串。<br>Hotkey string.
+ * @returns {Integer} 热键字符串是否合法。<br>Whether the key string is legal.
+ */
 VerifyKeyValidity(keyStr) {
     if keyStr = ""
         return false
@@ -504,6 +830,9 @@ VerifyKeyValidity(keyStr) {
     }
 }
 
+/**
+ * 读取中止热键编辑框并更新中止热键。<br>Read the abort hotkey edit box and update the stop key.
+ */
 UpdateStopKey(*) {
     global stopKey
     inputValue := StopKeyEdit.Value
@@ -521,10 +850,17 @@ UpdateStopKey(*) {
         StatusText.Text := "无效的中止热键。`nInvalid stop hotkey."
 }
 
+/**
+ * 更新中止热键的显示。<br>Update the display of abort hotkey.
+ * @param stopKey 
+ */
 UpdateStopKeyText(stopKey) {
     StopKey_text.Value := stopKey
 }
 
+/**
+ * 重置中止热键。<br>Reset the abort hotkey.
+ */
 ResetStopKey(*) {
     global stopKey
     stopKey := "#s"
@@ -534,6 +870,11 @@ ResetStopKey(*) {
 }
 
 ; 重置所有参数（Reset all parameters）
+/**
+ * 重置所有参数。<br>Reset all parameters.
+ * 
+ * 对于重复次数，重置为远程默认数值。<br>As for repetition, it's reset as the default ranged value.
+ */
 ResetAllParameters(*) {
     ResetLoopCount(true)
     ResetInterval()
@@ -542,6 +883,9 @@ ResetAllParameters(*) {
 }
 
 ; 按键序列操作（Key sequence operations）
+/**
+ * 读取自定义部分的按键组合并压入按键序列栈。<br>Read the key combination in custom part and push it into the key sequence stack.
+ */
 PushSequence(*) {
     ; 校验单键（Verify the single key）
     inputKey := KeyEdit.Value
@@ -576,6 +920,9 @@ PushSequence(*) {
     }
 }
 
+/**
+ * 从按键序列栈中清除最近压入的一个按键组合。<br>Clear the recently pushed key combination from the key sequence stack.
+ */
 PopSequence(*) {
     if keySeq.Length > 0 {
         SequenceList.Delete(keySeq.Length)
@@ -583,6 +930,9 @@ PopSequence(*) {
     }
 }
 
+/**
+ * 清除按键序列栈中的所有按键组合。<br>Clear all key combinations in the key sequence stack.
+ */
 ClearSequence(*) {
     keySeq.Length := 0
     SequenceList.Delete()
