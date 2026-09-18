@@ -1,20 +1,20 @@
 ﻿#Requires AutoHotkey v2.0
 
-; MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序。请确保您是通过以管理员身份运行ahk脚本而不是该脚本编译出来的exe文件来执行此程序，以防杀毒软件误隔离。`nThis program relies on AutoHotKey v2.0. Please make sure you've installed this application. Please make sure you Run the `"ahk`" script instead of the compiled `"exe`" file As Adminstrator, in case the `"exe`" file would be quarantined by any anti-virus software.`n按下Windows+Z以打开AutoHotKey官网。按下Windows+Shift+Z打开AutoHotKey v2官方文档。`nPress Windows + Z to open AutoHotKey official website. Press Windows + Shift + Z to open AutoHotKey v2 official documentation."
+MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序。请确保您是通过以管理员身份运行ahk脚本而不是该脚本编译出来的exe文件来执行此程序，以防杀毒软件误隔离。`nThis program relies on AutoHotKey v2.0. Please make sure you've installed this application. Please make sure you Run the `"ahk`" script instead of the compiled `"exe`" file As Adminstrator, in case the `"exe`" file would be quarantined by any anti-virus software.`n按下Windows+Z以打开AutoHotKey官网。按下Windows+Shift+Z打开AutoHotKey v2官方文档。`nPress Windows + Z to open AutoHotKey official website. Press Windows + Shift + Z to open AutoHotKey v2 official documentation.`n`n警告：更换字体和粗体选项将重置窗口所有状态！在执行此操作前，请注意保存数据。`nWarning: Changing the font size or boldness will reset all status in the window. Before you do this, please remember to save data."
 
 #z::Run("https://www.autohotkey.com") ; Windows+Z本来是调出窗口调节选项的，但其实鼠标悬停在最大化/还原按钮上面就可以调出这个选项（Windows + Z is originally meant to pull out the window adjustment options, but actually one can call it out by simplify moving the mouse cursor to the maximize / restore button）
 #+z::Run("https://www.autohotkey.com/docs/v2/") ; Windows+Shift+Z打开AutoHotKey v2官方文档（Windows + Shift + Z to open AutoHotKey v2 official documentation）
 
 
 ; 以管理员身份运行（Run As Administrator）
-; if (!A_IsAdmin) {
-;     try {
-;         Run '*RunAs "' A_ScriptFullPath '"'
-;         ExitApp
-;     } catch Error as e {
-;         MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
-;     }
-; }
+if (!A_IsAdmin) {
+    try {
+        Run '*RunAs "' A_ScriptFullPath '"'
+        ExitApp
+    } catch Error as e {
+        MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
+    }
+}
 
 ; 初始化全局变量（Initialize global variables）
 maxLoops := 1980 ; 重复次数（Repetition times）
@@ -29,6 +29,7 @@ BasicAttackNeeded_Actions["incunit100health"] := true
 BasicAttackNeeded_Actions["decunit100health"] := true
 BasicAttackNeeded_Actions["incunit10resistance"] := true
 BasicAttackNeeded_Actions["decunit10resistance"] := true
+IsBold := true ; 是否使用粗体字（Whether to use bold characters）
 
 ; 准备一些测量函数（Prepare some measure functions）
 /**
@@ -117,11 +118,11 @@ CURRENT_FONT_SIZE := 12 ; 当前字号（Current font size）
 SCALE := CURRENT_FONT_SIZE / BASE_FONT_SIZE ; 缩放比例（Scale ratio）
 FONT_OPTIONS := "s12 bold" ; 字体选项（Font options）
 ;; 获取控件的横纵间距（Get the horizontal and vertical gaps between controls）
-MeasurePadding(FONT_OPTIONS, FONT_NAME)
+MeasurePadding("s12 bold", FONT_NAME)
 ;; 获取不同控件的逻辑高度（Get the height of different controls）
-MeasureAllHeight(FONT_OPTIONS, FONT_NAME)
+MeasureAllHeight("s12 bold", FONT_NAME)
 ;; 获取不同控件的逻辑宽度（Get the width of different controls）
-MeasureAllWidth(FONT_OPTIONS, FONT_NAME)
+MeasureAllWidth("s12 bold", FONT_NAME)
 ;; 定义单位函数（Define unit functions）
 /**
  * 计算缩放后的像素数。<br>Calculate scaled pixels.
@@ -310,168 +311,241 @@ AddCtrl(guiObj, region, config) {
     return ctrl
 }
 
-; 下面设置图形化界面（Set the graphical user interface）
-MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
-;; 标题（Title）
-MyGui.SetFont(FONT_OPTIONS, FONT_NAME)
-MyGui.Title := Stringtable.Title
-;; 左侧——按键部分（Left part - key press part）
-;;; 声明（Declaration）
-AddCtrl(MyGui, 1, Config_default.Left_Controls.Title)
-AddCtrl(MyGui, 1, Config_default.Left_Controls.Declaration)
-;;; 左侧第一分隔线（First separator of the left part）
-AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator1) ; 添加水平分隔线（Add horizontal separator）
-;;; 动作按钮（Action buttons）
-ActionButton_incgold := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddGoldButton)
-ActionButton_inclevel := AddCtrl(MyGui, 1, Config_default.Left_Controls.LevelUpButton)
-ActionButton_incunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddHPButton)
-ActionButton_decunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecHPButton)
-ActionButton_incunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddResistButton)
-ActionButton_decunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecResistButton)
-;;; 左侧第二分隔线（Second separator of the left part）
-AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator2)
-;;; 自定义控制按钮（Custom control buttons）
-;;;; 自定义（Custom）
-AddCtrl(MyGui, 1, Config_default.Left_Controls.CustomTitle)
-CheckBox1 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox1)
-CheckBox2 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox2)
-CheckBox3 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox3)
-AddCtrl(MyGui, 1, Config_default.Left_Controls.CustomPrompt)
-KeyEdit := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyEdit)
-ActionButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyRunButton)
-;;;; 序列循环（Sequence loop）
-AddCtrl(MyGui, 1, Config_default.Left_Controls.SequenceLoopTitle)
-PushButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PushButton)
-PopButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PopButton)
-ClearButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.ClearButton)
-RunSequenceButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.RunSequenceButton)
-;;; 左侧第三分隔线（Third separator of the left part）
-AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator3)
-;;; 状态栏（Status section）
-StopButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.StopButton)
-;;;; 状态视觉元素（Status visual elements）
-StatusText := AddCtrl(MyGui, 1, Config_default.Left_Controls.StatusText) ; 添加状态显示（Add status display）
-ProgressBar := AddCtrl(MyGui, 1, Config_default.Left_Controls.ProgressBar) ; 添加一个隐藏的进度条，用于视觉反馈（Add a hidden progress bar for visual feedback）
-;;; 退出按钮（Exit button）
-QuitButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.ExitButton) ; 添加退出按钮（Add exit button）
-;; 第一垂直分隔线（First vertical separator）
-AddCtrl(MyGui, 2, Config_default.VSeparator1)
-;; 中间——按键序列（Middle part - key sequence）
-AddCtrl(MyGui, 3, Config_default.Middle_Controls.Title)
-SequenceList := AddCtrl(MyGui, 3, Config_default.Middle_Controls.List)
-;; 第二垂直分隔线（Second vertical separator）
-AddCtrl(MyGui, 4, Config_default.VSeparator2)
-;; 右侧——参数配置（Right part - parameter configuration）
-;;; 标题（Title）
-AddCtrl(MyGui, 5, Config_default.Right_Controls.Title)
-;;; 重复次数（Repetition）
-AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionLabel)
-LoopEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionEdit)
-Repeat_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateRepetitionButton)
-RepeatNumber_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionValue)
-MeleeRepeat_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.MeleeResetRepetitionButton)
-RangedRepeat_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.RangedResetRepetitionButton)
-;;; 命令执行间隔（Command execution interval）
-AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalLabel) ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
-IntervalEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalEdit)
-Interval_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateIntervalButton)
-Interval_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalValue)
-Interval_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetIntervalButton)
-;;; 全局快捷键禁用（Hotkey to abort key press）
-AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyLabel)
-StopKeyEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyEdit)
-StopKey_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateAbortHotkeyButton)
-StopKey_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyValue)
-StopKey_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAbortHotkeyButton)
-;;; 全参数复位按钮（Button to reset all parameters）
-AllParameter_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAllParameterButton)
-;; 右侧第一分隔线（First separator of the left part）
-AddCtrl(MyGui, 5, Config_default.Right_Controls.Separator) ; 添加水平分隔线（Add horizontal separator）
-;; 按键格式说明文本（Key format instruction text）
-AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyHelpDoc)
+; 菜单栏的动作（Actions in menu bar）
+/**
+ * 设置图形化界面的字号。<br>Set the font size of the GUI.
+ * 
+ * 警告：此操作将重置页面所有状态。<br>Warning: This operation resets all status in the interface.
+ * @param {Integer} n 字号。<br>Font size.
+ */
+SetFontSize(n, *) {
+    global CURRENT_FONT_SIZE, FONT_OPTIONS, SCALE
+    CURRENT_FONT_SIZE := n
+    SCALE := CURRENT_FONT_SIZE / BASE_FONT_SIZE
+    FONT_OPTIONS := "s" n (IsBold ? " bold" : "")
+    ; 由于生成控件时在控件添加函数内会调用单位函数，因此这里不需要直接在三个测量函数中传入修改后的字体选项，而是使用默认字体选项即可（When controls are generated, `AddCtrl` function calls `U` function, so here the modified `FONT_OPTIONS` don't need to be passed into those three measure functions. Use the default font options instead）
+    MeasurePadding("s12 bold", FONT_NAME)
+    MeasureAllHeight("s12 bold", FONT_NAME)
+    MeasureAllWidth("s12 bold", FONT_NAME)
+    RebuildUI() ; 重新构建界面（Rebuild the GUI）
+}
 
-; 动作配置（Action config）
-ActionConfigs := Map() ; 设置用于StartAction的动作配置表（Set up an action config table for StartAction process）
-ActionConfigs["incgold"] := Map() ; 每个动作也是一个Map对象，分别包含要按下的控制键、按键、要松开的控制键、按钮对象和描述（Each action is also a Map object, containing the control keys to press, the key, the control keys to release, the button object and the description）
-ActionConfigs["incgold"]["ControlKeys"] := ["Shift"] ; 表明要被持续按住的键（Indicates the key to be held down）
-ActionConfigs["incgold"]["Key"] := "T"
-ActionConfigs["incgold"]["Button"] := ActionButton_incgold
-ActionConfigs["incgold"]["Description"] := "增加金钱/Add Gold"
-ActionConfigs["inclevel"] := Map()
-ActionConfigs["inclevel"]["ControlKeys"] := ["Shift"]
-ActionConfigs["inclevel"]["Key"] := "Y"
-ActionConfigs["inclevel"]["Button"] := ActionButton_inclevel
-ActionConfigs["inclevel"]["Description"] := "升级/Level Up"
-ActionConfigs["incunit100health"] := Map()
-ActionConfigs["incunit100health"]["ControlKeys"] := ["Ctrl", "Shift"]
-ActionConfigs["incunit100health"]["Key"] := "T"
-ActionConfigs["incunit100health"]["Button"] := ActionButton_incunit100health
-ActionConfigs["incunit100health"]["Description"] := "添加100最大生命值/Add 100 Max HP"
-ActionConfigs["decunit100health"] := Map()
-ActionConfigs["decunit100health"]["ControlKeys"] := ["Ctrl", "Shift"]
-ActionConfigs["decunit100health"]["Key"] := "Y"
-ActionConfigs["decunit100health"]["Button"] := ActionButton_decunit100health
-ActionConfigs["decunit100health"]["Description"] := "移除100最大生命值/Remove 100 Max HP"
-ActionConfigs["incunit10resistance"] := Map()
-ActionConfigs["incunit10resistance"]["ControlKeys"] := ["Ctrl", "Shift"]
-ActionConfigs["incunit10resistance"]["Key"] := "G"
-ActionConfigs["incunit10resistance"]["Button"] := ActionButton_incunit10resistance
-ActionConfigs["incunit10resistance"]["Description"] := "添加10双抗/Add 10 Resistances"
-ActionConfigs["decunit10resistance"] := Map()
-ActionConfigs["decunit10resistance"]["ControlKeys"] := ["Ctrl", "Shift"]
-ActionConfigs["decunit10resistance"]["Key"] := "H"
-ActionConfigs["decunit10resistance"]["Button"] := ActionButton_decunit10resistance
-ActionConfigs["decunit10resistance"]["Description"] := "移除10双抗/Remove 10 Resistances"
-ActionConfigs["custom"] := Map()
-ActionConfigs["custom"]["ControlKeys"] := []
-ActionConfigs["custom"]["Key"] := ""
-ActionConfigs["custom"]["Button"] := ActionButton_custom
-ActionConfigs["custom"]["Description"] := "自定义/Custom"
-ActionConfigs["sequence"] := Map()
-; ActionConfigs["sequence"]["ControlKeys"] := []
-; ActionConfigs["sequence"]["Key"] := ""
-ActionConfigs["sequence"]["Button"] := RunSequenceButton
-ActionConfigs["sequence"]["Description"] := "序列循环/Sequence Loop"
+/**
+ * 切换粗体。<br>Toggle boldness.
+ * 
+ * 警告：此操作将重置页面所有状态。<br>Warning: This operation resets all status in the interface.
+ */
+ToggleBold(*) {
+    global IsBold
+    IsBold := !IsBold
+    SetFontSize(CURRENT_FONT_SIZE)
+}
 
-; 为按钮绑定事件（Bind events to buttons）
-;; 动作按钮（Action buttons）
-ActionButton_incgold.OnEvent("Click", (*) => StartAction("incgold"))
-ActionButton_inclevel.OnEvent("Click", (*) => StartAction("inclevel"))
-ActionButton_incunit100health.OnEvent("Click", (*) => StartAction("incunit100health"))
-ActionButton_decunit100health.OnEvent("Click", (*) => StartAction("decunit100health"))
-ActionButton_incunit10resistance.OnEvent("Click", (*) => StartAction("incunit10resistance"))
-ActionButton_decunit10resistance.OnEvent("Click", (*) => StartAction("decunit10resistance"))
-ActionButton_custom.OnEvent("Click", (*) => StartCustom())
-;; 按键序列操作（Key sequence operations）
-PushButton_custom.OnEvent("Click", PushSequence)
-PopButton_custom.OnEvent("Click", PopSequence)
-ClearButton_custom.OnEvent("Click", ClearSequence)
-RunSequenceButton.OnEvent("Click", (*) => StartAction("sequence"))
-;; 退出按钮（Exit button）
-StopButton.OnEvent("Click", StopAction)
-QuitButton.OnEvent("Click", (*) => ExitApp())
-;; 参数设置（Parameter configuration）
-;;; 重复次数（Repetition）
-Repeat_UpdateButton.OnEvent("Click", UpdateLoopCount)
-MeleeRepeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(false))
-RangedRepeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(true))
-;;; 命令执行间隔（Command execution interval）
-Interval_UpdateButton.OnEvent("Click", UpdateInterval)
-Interval_ResetButton.OnEvent("Click", ResetInterval)
-;;; 中止热键（Abort hotkey）
-StopKey_UpdateButton.OnEvent("Click", UpdateStopKey)
-StopKey_ResetButton.OnEvent("Click", ResetStopKey)
-;;; 全部复位（Reset all）
-AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
-;; 设置窗口关闭和Esc键事件（Set windows close event）
-MyGui.OnEvent("Close", (*) => ExitApp())  ; 点击右上角×（Click on the "×" button on the top-right corner）
-; MyGui.OnEvent("Escape", (*) => ExitApp()) ; 按Esc键关闭程序。暂时禁用（Press "Esc" to close the app. Temporarily disabled）
+/**
+ * 显示关于对话框。<br>Show about dialog box.
+ */
+ShowAbout(*) {
+    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v2`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-09-18", "关于 | About", 0x40)
+}
 
-; 其它准备工作（Other preparations）
-UpdateRepetitionText(maxLoops)
-UpdateIntervalText(interval)
-UpdateStopKeyText(stopKey)
-SetTitleMatchMode(3) ; 设置窗口名称精确匹配（Set the window to be matched the exact name）
+/**
+ * 重新构建界面。<br>Re-create the user interface.
+ */
+RebuildUI() {
+    global MyGui
+    if IsSet(MyGui) && MyGui.Hwnd
+        MyGui.Destroy()
+    CreateMainGui()
+    MyGui.Show()
+}
+
+; 构建图形化界面（Create the Graphical User Interface）
+/**
+ * 构建主界面。<br>Create the main GUI.
+ */
+CreateMainGui() {
+    global MyGui, ActionConfigs, StopButton, StatusText, ProgressBar, KeyEdit, CheckBox1, CheckBox2, CheckBox3, LoopEdit, RepeatNumber_text, IntervalEdit, Interval_text, StopKeyEdit, StopKey_text, SequenceList
+    ; 下面设置图形化界面（Set the graphical user interface）    
+    MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
+    ;; 标题（Title）
+    MyGui.SetFont(FONT_OPTIONS, FONT_NAME)
+    MyGui.Title := Stringtable.Title
+    ;; 菜单栏（Menu bar）
+    MyMenu := MenuBar()
+    SettingsMenu := Menu()
+    FontSizeMenu := Menu()
+    Loop 15 {
+        FontSizeMenu.Add(A_Index, SetFontSize.Bind(A_Index))
+        if A_Index == CURRENT_FONT_SIZE
+            FontSizeMenu.Check(A_Index)
+    }
+    SettingsMenu.Add("字号 | Font size", FontSizeMenu)
+    SettingsMenu.Add("加粗 | Bold", ToggleBold)
+    if IsBold
+        SettingsMenu.Check("加粗 | Bold")
+    MyMenu.Add("设置 | Settings", SettingsMenu)
+    MyMenu.Add("关于 | About", ShowAbout)
+    MyGui.MenuBar := MyMenu
+    ;; 左侧——按键部分（Left part - key press part）
+    ;;; 声明（Declaration）
+    AddCtrl(MyGui, 1, Config_default.Left_Controls.Title)
+    AddCtrl(MyGui, 1, Config_default.Left_Controls.Declaration)
+    ;;; 左侧第一分隔线（First separator of the left part）
+    AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator1) ; 添加水平分隔线（Add horizontal separator）
+    ;;; 动作按钮（Action buttons）
+    ActionButton_incgold := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddGoldButton)
+    ActionButton_inclevel := AddCtrl(MyGui, 1, Config_default.Left_Controls.LevelUpButton)
+    ActionButton_incunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddHPButton)
+    ActionButton_decunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecHPButton)
+    ActionButton_incunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddResistButton)
+    ActionButton_decunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecResistButton)
+    ;;; 左侧第二分隔线（Second separator of the left part）
+    AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator2)
+    ;;; 自定义控制按钮（Custom control buttons）
+    ;;;; 自定义（Custom）
+    AddCtrl(MyGui, 1, Config_default.Left_Controls.CustomTitle)
+    CheckBox1 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox1)
+    CheckBox2 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox2)
+    CheckBox3 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox3)
+    AddCtrl(MyGui, 1, Config_default.Left_Controls.CustomPrompt)
+    KeyEdit := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyEdit)
+    ActionButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyRunButton)
+    ;;;; 序列循环（Sequence loop）
+    AddCtrl(MyGui, 1, Config_default.Left_Controls.SequenceLoopTitle)
+    PushButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PushButton)
+    PopButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PopButton)
+    ClearButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.ClearButton)
+    RunSequenceButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.RunSequenceButton)
+    ;;; 左侧第三分隔线（Third separator of the left part）
+    AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator3)
+    ;;; 状态栏（Status section）
+    StopButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.StopButton)
+    ;;;; 状态视觉元素（Status visual elements）
+    StatusText := AddCtrl(MyGui, 1, Config_default.Left_Controls.StatusText) ; 添加状态显示（Add status display）
+    ProgressBar := AddCtrl(MyGui, 1, Config_default.Left_Controls.ProgressBar) ; 添加一个隐藏的进度条，用于视觉反馈（Add a hidden progress bar for visual feedback）
+    ;;; 退出按钮（Exit button）
+    QuitButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.ExitButton) ; 添加退出按钮（Add exit button）
+    ;; 第一垂直分隔线（First vertical separator）
+    AddCtrl(MyGui, 2, Config_default.VSeparator1)
+    ;; 中间——按键序列（Middle part - key sequence）
+    AddCtrl(MyGui, 3, Config_default.Middle_Controls.Title)
+    SequenceList := AddCtrl(MyGui, 3, Config_default.Middle_Controls.List)
+    ;; 第二垂直分隔线（Second vertical separator）
+    AddCtrl(MyGui, 4, Config_default.VSeparator2)
+    ;; 右侧——参数配置（Right part - parameter configuration）
+    ;;; 标题（Title）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.Title)
+    ;;; 重复次数（Repetition）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionLabel)
+    LoopEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionEdit)
+    Repeat_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateRepetitionButton)
+    RepeatNumber_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionValue)
+    MeleeRepeat_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.MeleeResetRepetitionButton)
+    RangedRepeat_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.RangedResetRepetitionButton)
+    ;;; 命令执行间隔（Command execution interval）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalLabel) ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
+    IntervalEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalEdit)
+    Interval_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateIntervalButton)
+    Interval_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalValue)
+    Interval_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetIntervalButton)
+    ;;; 全局快捷键禁用（Hotkey to abort key press）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyLabel)
+    StopKeyEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyEdit)
+    StopKey_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateAbortHotkeyButton)
+    StopKey_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyValue)
+    StopKey_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAbortHotkeyButton)
+    ;;; 全参数复位按钮（Button to reset all parameters）
+    AllParameter_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAllParameterButton)
+    ;; 右侧第一分隔线（First separator of the left part）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.Separator) ; 添加水平分隔线（Add horizontal separator）
+    ;; 按键格式说明文本（Key format instruction text）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyHelpDoc)
+    
+    ; 动作配置（Action config）
+    ActionConfigs := Map() ; 设置用于StartAction的动作配置表（Set up an action config table for StartAction process）
+    ActionConfigs["incgold"] := Map() ; 每个动作也是一个Map对象，分别包含要按下的控制键、按键、要松开的控制键、按钮对象和描述（Each action is also a Map object, containing the control keys to press, the key, the control keys to release, the button object and the description）
+    ActionConfigs["incgold"]["ControlKeys"] := ["Shift"] ; 表明要被持续按住的键（Indicates the key to be held down）
+    ActionConfigs["incgold"]["Key"] := "T"
+    ActionConfigs["incgold"]["Button"] := ActionButton_incgold
+    ActionConfigs["incgold"]["Description"] := "增加金钱/Add Gold"
+    ActionConfigs["inclevel"] := Map()
+    ActionConfigs["inclevel"]["ControlKeys"] := ["Shift"]
+    ActionConfigs["inclevel"]["Key"] := "Y"
+    ActionConfigs["inclevel"]["Button"] := ActionButton_inclevel
+    ActionConfigs["inclevel"]["Description"] := "升级/Level Up"
+    ActionConfigs["incunit100health"] := Map()
+    ActionConfigs["incunit100health"]["ControlKeys"] := ["Ctrl", "Shift"]
+    ActionConfigs["incunit100health"]["Key"] := "T"
+    ActionConfigs["incunit100health"]["Button"] := ActionButton_incunit100health
+    ActionConfigs["incunit100health"]["Description"] := "添加100最大生命值/Add 100 Max HP"
+    ActionConfigs["decunit100health"] := Map()
+    ActionConfigs["decunit100health"]["ControlKeys"] := ["Ctrl", "Shift"]
+    ActionConfigs["decunit100health"]["Key"] := "Y"
+    ActionConfigs["decunit100health"]["Button"] := ActionButton_decunit100health
+    ActionConfigs["decunit100health"]["Description"] := "移除100最大生命值/Remove 100 Max HP"
+    ActionConfigs["incunit10resistance"] := Map()
+    ActionConfigs["incunit10resistance"]["ControlKeys"] := ["Ctrl", "Shift"]
+    ActionConfigs["incunit10resistance"]["Key"] := "G"
+    ActionConfigs["incunit10resistance"]["Button"] := ActionButton_incunit10resistance
+    ActionConfigs["incunit10resistance"]["Description"] := "添加10双抗/Add 10 Resistances"
+    ActionConfigs["decunit10resistance"] := Map()
+    ActionConfigs["decunit10resistance"]["ControlKeys"] := ["Ctrl", "Shift"]
+    ActionConfigs["decunit10resistance"]["Key"] := "H"
+    ActionConfigs["decunit10resistance"]["Button"] := ActionButton_decunit10resistance
+    ActionConfigs["decunit10resistance"]["Description"] := "移除10双抗/Remove 10 Resistances"
+    ActionConfigs["custom"] := Map()
+    ActionConfigs["custom"]["ControlKeys"] := []
+    ActionConfigs["custom"]["Key"] := ""
+    ActionConfigs["custom"]["Button"] := ActionButton_custom
+    ActionConfigs["custom"]["Description"] := "自定义/Custom"
+    ActionConfigs["sequence"] := Map()
+    ; ActionConfigs["sequence"]["ControlKeys"] := []
+    ; ActionConfigs["sequence"]["Key"] := ""
+    ActionConfigs["sequence"]["Button"] := RunSequenceButton
+    ActionConfigs["sequence"]["Description"] := "序列循环/Sequence Loop"
+    
+    ; 为按钮绑定事件（Bind events to buttons）
+    ;; 动作按钮（Action buttons）
+    ActionButton_incgold.OnEvent("Click", (*) => StartAction("incgold"))
+    ActionButton_inclevel.OnEvent("Click", (*) => StartAction("inclevel"))
+    ActionButton_incunit100health.OnEvent("Click", (*) => StartAction("incunit100health"))
+    ActionButton_decunit100health.OnEvent("Click", (*) => StartAction("decunit100health"))
+    ActionButton_incunit10resistance.OnEvent("Click", (*) => StartAction("incunit10resistance"))
+    ActionButton_decunit10resistance.OnEvent("Click", (*) => StartAction("decunit10resistance"))
+    ActionButton_custom.OnEvent("Click", (*) => StartCustom())
+    ;; 按键序列操作（Key sequence operations）
+    PushButton_custom.OnEvent("Click", PushSequence)
+    PopButton_custom.OnEvent("Click", PopSequence)
+    ClearButton_custom.OnEvent("Click", ClearSequence)
+    RunSequenceButton.OnEvent("Click", (*) => StartAction("sequence"))
+    ;; 退出按钮（Exit button）
+    StopButton.OnEvent("Click", StopAction)
+    QuitButton.OnEvent("Click", (*) => ExitApp())
+    ;; 参数设置（Parameter configuration）
+    ;;; 重复次数（Repetition）
+    Repeat_UpdateButton.OnEvent("Click", UpdateLoopCount)
+    MeleeRepeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(false))
+    RangedRepeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(true))
+    ;;; 命令执行间隔（Command execution interval）
+    Interval_UpdateButton.OnEvent("Click", UpdateInterval)
+    Interval_ResetButton.OnEvent("Click", ResetInterval)
+    ;;; 中止热键（Abort hotkey）
+    StopKey_UpdateButton.OnEvent("Click", UpdateStopKey)
+    StopKey_ResetButton.OnEvent("Click", ResetStopKey)
+    ;;; 全部复位（Reset all）
+    AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
+    ;; 设置窗口关闭和Esc键事件（Set windows close event）
+    MyGui.OnEvent("Close", (*) => ExitApp())  ; 点击右上角×（Click on the "×" button on the top-right corner）
+    ; MyGui.OnEvent("Escape", (*) => ExitApp()) ; 按Esc键关闭程序。暂时禁用（Press "Esc" to close the app. Temporarily disabled）
+    
+    ; 其它准备工作（Other preparations）
+    UpdateRepetitionText(maxLoops)
+    UpdateIntervalText(interval)
+    UpdateStopKeyText(stopKey)
+    SetTitleMatchMode(3) ; 设置窗口名称精确匹配（Set the window to be matched the exact name）
+}
+
+CreateMainGui()
 
 ; 显示界面（Show UI）
 MyGui.Show()
@@ -694,8 +768,6 @@ StartAction(actionId, *) {
  * 循环按下一个自定义单键。<br>Press a custom single key in a loop.
  */
 StartCustom(*) {
-    global KeyEdit, CheckBox1, CheckBox2, CheckBox3
-    
     ; 首先检查单键输入是否合法（First check whether the single key input is valid）
     inputKey := KeyEdit.Value
     if (StrLen(inputKey) = 0) {
