@@ -21,7 +21,7 @@ maxLoops := 1980 ; 重复次数（Repetition times）
 interval := 0 ; 命令执行间隔（Command execution interval）
 stopKey := "#s" ; 停止热键（Stop hotkey）
 Hotkey(stopKey, StopAction, "On")
-keySeq := [] ; 按键序列。每个元素是一个数组；每个数组的第一个元素是按键代码，第二个元素是按键的字符串表示（Key sequence. Each element is an array; the first element of each array is key code, and the second element is the string representation of the key to press）
+keySeq := [] ; 按键序列。每个元素是一个数组；每个数组的第一个元素是按键代码，第二个元素是按键的字符串表示，第三个元素是按下这个按键后经历多少延迟（Key sequence. Each element is an array; the first element of each array is key code, the second element is the string representation of the key to press, and the third element is how much time to wait after this key is pressed）
 IsRunning := false ; 标记是否在执行某个功能（Mark whether a function is being performed）
 StopRequested := false ; 标记用户是否请求中止（Mark whether the user has requested to abort）
 BasicAttackNeeded_Actions := Map() ; 用于普通攻击型功能的输出提示（Used for output hint of basic attack based cheats）
@@ -171,7 +171,8 @@ Stringtable := {
     Middle: {
         Title: "按键序列`nKey Sequence",
         Column1: "行号|Index",
-        Column2: "按键|Key"
+        Column2: "按键|Key",
+        Column3: "间隔|Interval"
     },
     Right: {
         Config: {
@@ -193,7 +194,7 @@ Config_default := {
     ; 区域划分（Area division）
     Regions: {
         Left:   {Width: 500, Height: 900},
-        Middle: {Width: 300, Height: 900},
+        Middle: {Width: 400, Height: 900},
         Right:  {Width: 750, Height: 900},
     },
     
@@ -234,7 +235,7 @@ Config_default := {
         ;        类型           横坐标   纵坐标                   宽度                高度         选项        文本
         ;        Type           X       Y                       Width               Height      Options     Text
         Title:  ["Text",        0,      PadY,                   300,                H_TEXT_2L,  "Center",   Stringtable.Middle.Title],
-        List:   ["ListView",    0,      PadY * 2 + H_TEXT_2L,   300,                H_LISTVIEW, "Center",   [Stringtable.Middle.Column1, Stringtable.Middle.Column2]]
+        List:   ["ListView",    0,      PadY * 2 + H_TEXT_2L,   400,                H_LISTVIEW, "Center",   [Stringtable.Middle.Column1, Stringtable.Middle.Column2, Stringtable.Middle.Column3]]
     },
     VSeparator2: ["Text",       0,      PadY,                   W_VSEPARATOR,       800,        "0x11",                 ""],
     Right_Controls: {
@@ -377,7 +378,7 @@ RebuildUI() {
  * 构建主界面。<br>Create the main GUI.
  */
 CreateMainGui() {
-    global MyGui, SettingsMenu, ActionConfigs, StopButton, StatusText, ProgressBar, KeyEdit, CheckBox1, CheckBox2, CheckBox3, LoopEdit, RepeatNumber_text, IntervalEdit, Interval_text, StopKeyEdit, StopKey_text, SequenceList
+    global MyGui, SettingsMenu, ActionConfigs, StopButton, StatusText, ProgressBar, KeyEdit, CheckBox1, CheckBox2, CheckBox3, SequenceList, LoopEdit, RepeatNumber_text, IntervalEdit, Interval_text, StopKeyEdit, StopKey_text
     ; 下面设置图形化界面（Set the graphical user interface）    
     MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
     ;; 标题（Title）
@@ -445,6 +446,7 @@ CreateMainGui() {
     ;; 中间——按键序列（Middle part - key sequence）
     AddCtrl(MyGui, 3, Config_default.Middle_Controls.Title)
     SequenceList := AddCtrl(MyGui, 3, Config_default.Middle_Controls.List)
+    SequenceList.ModifyCol(2, "Auto")
     ;; 第二垂直分隔线（Second vertical separator）
     AddCtrl(MyGui, 4, Config_default.VSeparator2)
     ;; 右侧——参数配置（Right part - parameter configuration）
@@ -656,7 +658,7 @@ StartAction(actionId, *) {
             
             ; 发送按键（Send key press）
             back := false
-            for index, array in keySeq {
+            for index, array, keyInterval in keySeq {
                 keyToSend := array[1]
                 try {
                     Send(keyToSend) ; 核心（Core）
@@ -665,7 +667,7 @@ StartAction(actionId, *) {
                     back := true
                     break
                 }
-                Sleep(interval)
+                Sleep(keyInterval)
             }
             if back
                 break
@@ -999,12 +1001,11 @@ PushSequence(*) {
         seqCode := "{Ctrl Down}" seqCode "{Ctrl Up}"
         seqStr := "Ctrl+" seqStr
     }
-    if (keySeq.Length == 0 or seqCode != keySeq[-1][1]) { ; 相同的按键不允许相邻排列（Repeated key combinations aren't allowed to be placed next to each other）
-        ; 修改数据结构（Edit data structure）
-        keySeq.Push([seqCode, seqStr])
-        ; 展示结果（Display the result）
-        SequenceList.Add("", keySeq.Length, seqStr)
-    }
+    ; 修改数据结构（Edit data structure）
+    keySeq.Push([seqCode, seqStr, interval])
+    ; 展示结果（Display the result）
+    SequenceList.Add("", keySeq.Length, seqStr, interval)
+    SequenceList.ModifyCol(2, "Auto")
 }
 
 /**
@@ -1013,6 +1014,7 @@ PushSequence(*) {
 PopSequence(*) {
     if keySeq.Length > 0 {
         SequenceList.Delete(keySeq.Length)
+        SequenceList.ModifyCol(2, "Auto")
         keySeq.Pop()
     }
 }
@@ -1023,4 +1025,5 @@ PopSequence(*) {
 ClearSequence(*) {
     keySeq.Length := 0
     SequenceList.Delete()
+    SequenceList.ModifyCol(2, "Auto")
 }
