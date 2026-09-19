@@ -30,6 +30,7 @@ BasicAttackNeeded_Actions["decunit100health"] := true
 BasicAttackNeeded_Actions["incunit10resistance"] := true
 BasicAttackNeeded_Actions["decunit10resistance"] := true
 IsBold := true ; 是否使用粗体字（Whether to use bold characters）
+ProgressMonitorAlwaysOnTop := false ; 进度小窗口是否置顶（Whether the progress monitor is always on top）
 
 ; 准备一些测量函数（Prepare some measure functions）
 /**
@@ -342,6 +343,18 @@ ToggleBold(*) {
 }
 
 /**
+ * 切换进度小窗口置顶状态。<br>Toggle the progress monitor window to become always on top or not.
+ */
+ToggleProgressMonitorAlwaysOnTop(*) {
+    global ProgressMonitorAlwaysOnTop
+    ProgressMonitorAlwaysOnTop := !ProgressMonitorAlwaysOnTop
+    if ProgressMonitorAlwaysOnTop
+        SettingsMenu.Check("执行进度置顶 | Progress always on top")
+    else
+        SettingsMenu.Uncheck("执行进度置顶 | Progress always on top")
+}
+
+/**
  * 显示关于对话框。<br>Show about dialog box.
  */
 ShowAbout(*) {
@@ -364,7 +377,7 @@ RebuildUI() {
  * 构建主界面。<br>Create the main GUI.
  */
 CreateMainGui() {
-    global MyGui, ActionConfigs, StopButton, StatusText, ProgressBar, KeyEdit, CheckBox1, CheckBox2, CheckBox3, LoopEdit, RepeatNumber_text, IntervalEdit, Interval_text, StopKeyEdit, StopKey_text, SequenceList
+    global MyGui, SettingsMenu, ActionConfigs, StopButton, StatusText, ProgressBar, KeyEdit, CheckBox1, CheckBox2, CheckBox3, LoopEdit, RepeatNumber_text, IntervalEdit, Interval_text, StopKeyEdit, StopKey_text, SequenceList
     ; 下面设置图形化界面（Set the graphical user interface）    
     MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
     ;; 标题（Title）
@@ -383,6 +396,8 @@ CreateMainGui() {
     SettingsMenu.Add("加粗 | Bold", ToggleBold)
     if IsBold
         SettingsMenu.Check("加粗 | Bold")
+    SettingsMenu.Add("执行进度置顶 | Progress always on top", ToggleProgressMonitorAlwaysOnTop)
+    ToggleProgressMonitorAlwaysOnTop()
     MyMenu.Add("设置 | Settings", SettingsMenu)
     MyMenu.Add("关于 | About", ShowAbout)
     MyGui.MenuBar := MyMenu
