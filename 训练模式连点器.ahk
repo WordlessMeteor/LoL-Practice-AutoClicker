@@ -1,11 +1,5 @@
 ﻿#Requires AutoHotkey v2.0
 
-MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序。请确保您是通过以管理员身份运行ahk脚本而不是该脚本编译出来的exe文件来执行此程序，以防杀毒软件误隔离。`nThis program relies on AutoHotKey v2.0. Please make sure you've installed this application. Please make sure you Run the `"ahk`" script instead of the compiled `"exe`" file As Adminstrator, in case the `"exe`" file would be quarantined by any anti-virus software.`n按下Windows+Z以打开AutoHotKey官网。按下Windows+Shift+Z打开AutoHotKey v2官方文档。`nPress Windows + Z to open AutoHotKey official website. Press Windows + Shift + Z to open AutoHotKey v2 official documentation.`n`n警告：更换字体和粗体选项将重置窗口所有状态！在执行此操作前，请注意保存数据。`nWarning: Changing the font size or boldness will reset all status in the window. Before you do this, please remember to save data."
-
-#z::Run("https://www.autohotkey.com") ; Windows+Z本来是调出窗口调节选项的，但其实鼠标悬停在最大化/还原按钮上面就可以调出这个选项（Windows + Z is originally meant to pull out the window adjustment options, but actually one can call it out by simplify moving the mouse cursor to the maximize / restore button）
-#+z::Run("https://www.autohotkey.com/docs/v2/") ; Windows+Shift+Z打开AutoHotKey v2官方文档（Windows + Shift + Z to open AutoHotKey v2 official documentation）
-
-
 ; 以管理员身份运行（Run As Administrator）
 if (!A_IsAdmin) {
     try {
@@ -15,6 +9,12 @@ if (!A_IsAdmin) {
         MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
     }
 }
+
+MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序。请确保您是通过以管理员身份运行ahk脚本而不是该脚本编译出来的exe文件来执行此程序，以防杀毒软件误隔离。`nThis program relies on AutoHotKey v2.0. Please make sure you've installed this application. Please make sure you Run the `"ahk`" script instead of the compiled `"exe`" file As Adminstrator, in case the `"exe`" file would be quarantined by any anti-virus software.`n按下Windows+Z以打开AutoHotKey官网。按下Windows+Shift+Z打开AutoHotKey v2官方文档。`nPress Windows + Z to open AutoHotKey official website. Press Windows + Shift + Z to open AutoHotKey v2 official documentation.`n`n警告：更换字体和粗体选项将重置窗口所有状态！在执行此操作前，请注意保存数据。`nWarning: Changing the font size or boldness will reset all status in the window. Before you do this, please remember to save data."
+
+#z::Run("https://www.autohotkey.com") ; Windows+Z本来是调出窗口调节选项的，但其实鼠标悬停在最大化/还原按钮上面就可以调出这个选项（Windows + Z is originally meant to pull out the window adjustment options, but actually one can call it out by simplify moving the mouse cursor to the maximize / restore button）
+#+z::Run("https://www.autohotkey.com/docs/v2/") ; Windows+Shift+Z打开AutoHotKey v2官方文档（Windows + Shift + Z to open AutoHotKey v2 official documentation）
+
 
 ; 初始化全局变量（Initialize global variables）
 maxLoops := 1980 ; 重复次数（Repetition times）
