@@ -6,11 +6,11 @@ if (!A_IsAdmin) {
         Run '*RunAs "' A_ScriptFullPath '"'
         ExitApp
     } catch Error as e {
-        MsgBox "脚本尝试以管理员权限重启失败。`n在游戏内可能无法正常工作。"
+        MsgBox "脚本尝试以管理员权限重启失败。在游戏内可能无法正常工作。`nThe program fails to be run as administrator. It may not operate as expected in game."
     }
 }
 
-MsgBox "本脚本依赖于AutoHotKey v2.0，请确保您已安装该应用程序。请确保您是通过以管理员身份运行ahk脚本而不是该脚本编译出来的exe文件来执行此程序，以防杀毒软件误隔离。`nThis program relies on AutoHotKey v2.0. Please make sure you've installed this application. Please make sure you Run the `"ahk`" script instead of the compiled `"exe`" file As Adminstrator, in case the `"exe`" file would be quarantined by any anti-virus software.`n按下Windows+Z以打开AutoHotKey官网。按下Windows+Shift+Z打开AutoHotKey v2官方文档。`nPress Windows + Z to open AutoHotKey official website. Press Windows + Shift + Z to open AutoHotKey v2 official documentation.`n`n警告：更换字体和粗体选项将重置窗口所有状态！在执行此操作前，请注意保存数据。`nWarning: Changing the font size or boldness will reset all status in the window. Before you do this, please remember to save data."
+MsgBox "本脚本依赖于AutoHotKey v2.0。`nThis program relies on AutoHotKey v2.0.`n如果您以管理员身份运行ahk脚本，请确保您已安装该应用程序。`nIf you Run this ahk script as Administrator, please make sure you've installed this application.`n如果您以管理员身份运行由该脚本编译出来的exe文件，请将此文件加入Windows Defender或其它杀毒软件的白名单，以防隔离。`nIf you Run the compiled exe file As Administrator, please add this exe file into the white list of Windows Defender or other anti-virus softwares, in case it would be quarantined.`n`n按下Windows+Z以打开AutoHotKey官网。按下Windows+Shift+Z打开AutoHotKey v2官方文档。`nPress Windows + Z to open AutoHotKey official website. Press Windows + Shift + Z to open AutoHotKey v2 official documentation.`n`n警告：更换字体和粗体选项将重置窗口所有状态！在执行此操作前，请注意保存数据。`nWarning: Changing the font size or boldness will reset all status in the window. Before you do this, please remember to save data."
 
 #z::Run("https://www.autohotkey.com") ; Windows+Z本来是调出窗口调节选项的，但其实鼠标悬停在最大化/还原按钮上面就可以调出这个选项（Windows + Z is originally meant to pull out the window adjustment options, but actually one can call it out by simplify moving the mouse cursor to the maximize / restore button）
 #+z::Run("https://www.autohotkey.com/docs/v2/") ; Windows+Shift+Z打开AutoHotKey v2官方文档（Windows + Shift + Z to open AutoHotKey v2 official documentation）
@@ -30,7 +30,7 @@ BasicAttackNeeded_Actions["decunit100health"] := true
 BasicAttackNeeded_Actions["incunit10resistance"] := true
 BasicAttackNeeded_Actions["decunit10resistance"] := true
 IsBold := true ; 是否使用粗体字（Whether to use bold characters）
-ProgressMonitorAlwaysOnTop := false ; 进度小窗口是否置顶（Whether the progress monitor is always on top）
+ProgressMonitorAlwaysOnTop := true ; 进度小窗口是否置顶（Whether the progress monitor is always on top）
 
 ; 准备一些测量函数（Prepare some measure functions）
 /**
@@ -346,9 +346,16 @@ ToggleBold(*) {
 /**
  * 切换进度小窗口置顶状态。<br>Toggle the progress monitor window to become always on top or not.
  */
-ToggleProgressMonitorAlwaysOnTop(*) {
+ToggleSettingsOption_ProgressMonitorAlwaysOnTop(*) {
     global ProgressMonitorAlwaysOnTop
     ProgressMonitorAlwaysOnTop := !ProgressMonitorAlwaysOnTop
+    UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop()
+}
+
+/**
+ * 更新执行进度置顶设置的勾选状态。<br>Update the check status of "Progress always on top" settings option.
+ */
+UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop() {
     if ProgressMonitorAlwaysOnTop
         SettingsMenu.Check("执行进度置顶 | Progress always on top")
     else
@@ -359,7 +366,7 @@ ToggleProgressMonitorAlwaysOnTop(*) {
  * 显示关于对话框。<br>Show about dialog box.
  */
 ShowAbout(*) {
-    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v2`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-09-18", "关于 | About", 0x40)
+    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v2`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-09-20", "关于 | About", 0x40)
 }
 
 /**
@@ -397,8 +404,8 @@ CreateMainGui() {
     SettingsMenu.Add("加粗 | Bold", ToggleBold)
     if IsBold
         SettingsMenu.Check("加粗 | Bold")
-    SettingsMenu.Add("执行进度置顶 | Progress always on top", ToggleProgressMonitorAlwaysOnTop)
-    ToggleProgressMonitorAlwaysOnTop()
+    SettingsMenu.Add("执行进度置顶 | Progress always on top", ToggleSettingsOption_ProgressMonitorAlwaysOnTop)
+    UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop()
     MyMenu.Add("设置 | Settings", SettingsMenu)
     MyMenu.Add("关于 | About", ShowAbout)
     MyGui.MenuBar := MyMenu
