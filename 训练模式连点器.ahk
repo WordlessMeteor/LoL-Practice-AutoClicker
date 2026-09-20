@@ -620,7 +620,7 @@ StartAction(actionId, *) {
     }
     
     ; 创建监视对话框（Create a monitor dialog box）
-    ProgressMonitorGui := Gui("+AlwaysOnTop +ToolWindow +Border", "执行中…… | Running ...")
+    ProgressMonitorGui := Gui((ProgressMonitorAlwaysOnTop ? "+AlwaysOnTop" : "") " +ToolWindow +Border", "执行中…… | Running ...")
     ProgressMonitorGui.SetFont("s10", "Microsoft YaHei")
     ProgressText := ProgressMonitorGui.Add("Text", "w350 Center", "正在初始化……`nInitializing ...") ; 添加进度文本（Add progress text）
     MonitorProgressBar := ProgressMonitorGui.Add("Progress", "w350 h20 Range0-100 -Smooth", 0) ; 添加进度条（Add progress bar）
