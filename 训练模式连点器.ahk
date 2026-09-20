@@ -453,7 +453,8 @@ CreateMainGui() {
     ;; 中间——按键序列（Middle part - key sequence）
     AddCtrl(MyGui, 3, Config_default.Middle_Controls.Title)
     SequenceList := AddCtrl(MyGui, 3, Config_default.Middle_Controls.List)
-    SequenceList.ModifyCol(2, "Auto")
+    SequenceList.ModifyCol(2, "AutoHdr")
+    SequenceList.ModifyCol(3, "AutoHdr")
     ;; 第二垂直分隔线（Second vertical separator）
     AddCtrl(MyGui, 4, Config_default.VSeparator2)
     ;; 右侧——参数配置（Right part - parameter configuration）
@@ -1012,7 +1013,8 @@ PushSequence(*) {
     keySeq.Push([seqCode, seqStr, interval])
     ; 展示结果（Display the result）
     SequenceList.Add("", keySeq.Length, seqStr, interval)
-    SequenceList.ModifyCol(2, "Auto")
+    SequenceList.ModifyCol(2, "AutoHdr")
+    SequenceList.ModifyCol(3, "AutoHdr")
 }
 
 /**
@@ -1021,7 +1023,8 @@ PushSequence(*) {
 PopSequence(*) {
     if keySeq.Length > 0 {
         SequenceList.Delete(keySeq.Length)
-        SequenceList.ModifyCol(2, "Auto")
+        SequenceList.ModifyCol(2, "AutoHdr")
+        SequenceList.ModifyCol(3, "AutoHdr")
         keySeq.Pop()
     }
 }
@@ -1032,5 +1035,6 @@ PopSequence(*) {
 ClearSequence(*) {
     keySeq.Length := 0
     SequenceList.Delete()
-    SequenceList.ModifyCol(2, "Auto")
+    SequenceList.ModifyCol(2, "AutoHdr")
+    SequenceList.ModifyCol(3, "AutoHdr")
 }
