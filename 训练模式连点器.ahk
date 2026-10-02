@@ -236,7 +236,7 @@ Config_default := {
     Middle_Controls: {
         ;        类型           横坐标   纵坐标                   宽度                高度         选项        文本
         ;        Type           X       Y                       Width               Height      Options     Text
-        Title:  ["Text",        0,      PadY,                   300,                H_TEXT_2L,  "Center",   Stringtable.Middle.Title],
+        Title:  ["Text",        0,      PadY,                   400,                H_TEXT_2L,  "Center",   Stringtable.Middle.Title],
         List:   ["ListView",    0,      PadY * 2 + H_TEXT_2L,   400,                H_LISTVIEW, "Center",   [Stringtable.Middle.Column1, Stringtable.Middle.Column2, Stringtable.Middle.Column3]]
     },
     VSeparator2: ["Text",       0,      PadY,                   W_VSEPARATOR,       850,        "0x11",                 ""],
