@@ -39,6 +39,8 @@ This program supports repetitively pressing the following three kinds of keys:
 3. Custom key combination sequence.
     - This benefits the test of [Arena GoH Evelynn Easter Egg BUG](https://youtu.be/1oOkwDWpl7Y).
         - For example, the user may **push** Ctrl + 1 and Ctrl + 3 into the key sequence stack repetitively to let the champion alternate between joking and dancing, thus creating a server instant when there might be multiple players changing from not dancing into dancing if possible.
+
+Besides, this program supports parameter configuration on the right side, including the number of repeats, time interval between two successive key presses and abort hotkey.
 ## Notes
 1. The default font of this program is <ins>12, bold</ins>. Users may adjust the font size and boldness in settings. On the monitor with low resolution and high scale ratio (e.g. 1080P with 125% scale ratio), the GUI might not display completely. In that case, please lower the font size, e.g. from 12 to 10.
 2. After "Progress always on top" settings option is unchecked, when the auto-clicker repetitively clicks some key, the progress window no longer pops up in the center of the screen. This is likely to impact switching between windows, so think twice before you uncheck this option.
