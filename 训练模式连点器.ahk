@@ -14,7 +14,7 @@ MsgBox "本脚本依赖于AutoHotKey v2.0。`nThis program relies on AutoHotKey 
 
 #z::Run("https://www.autohotkey.com") ; Windows+Z本来是调出窗口调节选项的，但其实鼠标悬停在最大化/还原按钮上面就可以调出这个选项（Windows + Z is originally meant to pull out the window adjustment options, but actually one can call it out by simplify moving the mouse cursor to the maximize / restore button）
 #+z::Run("https://www.autohotkey.com/docs/v2/") ; Windows+Shift+Z打开AutoHotKey v2官方文档（Windows + Shift + Z to open AutoHotKey v2 official documentation）
-
+#!z::Run("https://github.com/WordlessMeteor/LoL-Practice-AutoClicker") ; Windows+Alt+Z打开程序GitHub页面（Windows + Alt + Z to open the program's GitHub page）
 
 ; 初始化全局变量（Initialize global variables）
 maxLoops := 1980 ; 重复次数（Repetition times）
@@ -99,7 +99,7 @@ MeasureAllHeight(fontOptions, fontName) {
     H_CHECKBOX_1L := MeasureHeight(fontOptions, fontName, ["Checkbox", "", ""]) ; 含有一行文本的勾选框高度（Height of a checkbox with 1 line of text）
     H_EDIT_1L := MeasureHeight(fontOptions, fontName, ["Edit", "", ""]) ; 可容纳一行文本的编辑框高度（Height of an edit box that can hold 1 line of text）
     H_PROGRESS := MeasureHeight(fontOptions, fontName, ["Progress", "", 0]) ; 进度条的高度（Height of a progress bar）
-    H_LISTVIEW := MeasureHeight(fontOptions, fontName, ["ListView", "r26", ["", ""]]) ; 可容纳30条记录的列表的高度（Height of a list that can hold 30 records）
+    H_LISTVIEW := MeasureHeight(fontOptions, fontName, ["ListView", "r28", ["", ""]]) ; 可容纳30条记录的列表的高度（Height of a list that can hold 30 records）
 }
 /**
  * 测量各类控件的宽度。<br>Measure the width of all kinds of controls.
@@ -147,7 +147,8 @@ Stringtable := {
             AddHP: "添加100最大生命值`nAdd 100 Max HP",
             DecHP: "移除100最大生命值`nRemove 100 Max HP",
             AddResist: "添加10双抗`nAdd 10 Resistances",
-            DecResist: "移除10双抗`nRemove 10 Resistances"
+            DecResist: "移除10双抗`nRemove 10 Resistances",
+            StackItem: "给装备叠层`nStack Items"
         },
         Custom: {
             Title: "自定义`nCustom",
@@ -193,9 +194,9 @@ Stringtable := {
 Config_default := {
     ; 区域划分（Area division）
     Regions: {
-        Left:   {Width: 500, Height: 900},
-        Middle: {Width: 400, Height: 900},
-        Right:  {Width: 750, Height: 900},
+        Left:   {Width: 500, Height: 950},
+        Middle: {Width: 400, Height: 950},
+        Right:  {Width: 750, Height: 950},
     },
     
     ; 每个区域内的控件规格（Control speculation in each area）
@@ -211,33 +212,34 @@ Config_default := {
         DecHPButton:        ["Button",      275,    PadY * 5 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L,                                                  200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.DecHP],
         AddResistButton:    ["Button",      25,     PadY * 6 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 2,                                              200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddResist],
         DecResistButton:    ["Button",      275,    PadY * 6 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 2,                                              200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.DecResist],
-        Separator2:         ["Text",        0,      PadY * 7 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 3,                                              500,                H_HSEPARATOR,       "0x10",                 ""],
-        CustomTitle:        ["Text",        0,      PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + 20,                                     100,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.Title],
-        Checkbox1:          ["Checkbox",    100,    PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3,                                          60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox1],
-        Checkbox2:          ["Checkbox",    100,    PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L,                          60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox2],
-        Checkbox3:          ["Checkbox",    100,    PadY * 10 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 2,                     60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox3],
-        CustomPrompt:       ["Text",        170,    PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3,                                          220,                H_TEXT_2L,          "",                     Stringtable.Left.Custom.Prompt],
-        SingleKeyEdit:      ["Edit",        170,    PadY * 9 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3,                                      220,                H_EDIT_1L,          "",                     ""],
-        SingleKeyRunButton: ["Button",      400,    PadY * 9 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3,                                      100,                H_BUTTON_1L,        "",                     Stringtable.Left.Custom.RunButton],
-        SequenceLoopTitle:  ["Text",        0,      PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                     160,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.SequenceLoop],
-        PushButton:         ["Button",      170,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PushButton],
-        PopButton:          ["Button",      280,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PopButton],
-        ClearButton:        ["Button",      390,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.ClearButton],
-        RunSequenceButton:  ["Button",      150,    PadY * 12 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 3 + H_CHECKBOX_1L * 3,                 200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Custom.RunSequenceButton],
-        Separator3:         ["Text",        0,      PadY * 13 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                 500,                H_HSEPARATOR,       "0x10",                 ""],
-        StopButton:         ["Button",      175,    PadY * 14 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                 150,                H_BUTTON_2L,        "Center Disabled",      Stringtable.Left.Status.StopButton],
-        StatusText:         ["Text",        0,      PadY * 15 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                 500,                H_TEXT_2L,          "Center",               Stringtable.Left.Status.Text],
-        ProgressBar:        ["Progress",    25,     PadY * 16 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                 450,                H_PROGRESS,         "Range0-100 -Smooth",   ""],
-        ExitButton:         ["Button",      190,    PadY * 17 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3 + H_PROGRESS,    120,                H_BUTTON_1L,        "Center",               Stringtable.Left.Status.ExitButton],
+        StackItemButton:    ["Button",      25,     PadY * 7 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 3,                                              200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.StackItem],
+        Separator2:         ["Text",        0,      PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 4,                                              500,                H_HSEPARATOR,       "0x10",                 ""],
+        CustomTitle:        ["Text",        0,      PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + 20,                                     100,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.Title],
+        Checkbox1:          ["Checkbox",    100,    PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                          60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox1],
+        Checkbox2:          ["Checkbox",    100,    PadY * 10 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L,                         60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox2],
+        Checkbox3:          ["Checkbox",    100,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 2,                     60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox3],
+        CustomPrompt:       ["Text",        170,    PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                          220,                H_TEXT_2L,          "",                     Stringtable.Left.Custom.Prompt],
+        SingleKeyEdit:      ["Edit",        170,    PadY * 10 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                     220,                H_EDIT_1L,          "",                     ""],
+        SingleKeyRunButton: ["Button",      400,    PadY * 10 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                     100,                H_BUTTON_1L,        "",                     Stringtable.Left.Custom.RunButton],
+        SequenceLoopTitle:  ["Text",        0,      PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                     160,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.SequenceLoop],
+        PushButton:         ["Button",      170,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PushButton],
+        PopButton:          ["Button",      280,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PopButton],
+        ClearButton:        ["Button",      390,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.ClearButton],
+        RunSequenceButton:  ["Button",      150,    PadY * 13 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                 200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Custom.RunSequenceButton],
+        Separator3:         ["Text",        0,      PadY * 14 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                 500,                H_HSEPARATOR,       "0x10",                 ""],
+        StopButton:         ["Button",      175,    PadY * 15 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                 150,                H_BUTTON_2L,        "Center Disabled",      Stringtable.Left.Status.StopButton],
+        StatusText:         ["Text",        0,      PadY * 16 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3,                 500,                H_TEXT_2L,          "Center",               Stringtable.Left.Status.Text],
+        ProgressBar:        ["Progress",    25,     PadY * 17 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3,                 450,                H_PROGRESS,         "Range0-100 -Smooth",   ""],
+        ExitButton:         ["Button",      190,    PadY * 18 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3 + H_PROGRESS,    120,                H_BUTTON_1L,        "Center",               Stringtable.Left.Status.ExitButton],
     },
-    VSeparator1:            ["Text",        0,      PadY,                                                                                                           W_VSEPARATOR,       800,                "0x11",                 ""],
+    VSeparator1:            ["Text",        0,      PadY,                                                                                                           W_VSEPARATOR,       850,                "0x11",                 ""],
     Middle_Controls: {
         ;        类型           横坐标   纵坐标                   宽度                高度         选项        文本
         ;        Type           X       Y                       Width               Height      Options     Text
         Title:  ["Text",        0,      PadY,                   300,                H_TEXT_2L,  "Center",   Stringtable.Middle.Title],
         List:   ["ListView",    0,      PadY * 2 + H_TEXT_2L,   400,                H_LISTVIEW, "Center",   [Stringtable.Middle.Column1, Stringtable.Middle.Column2, Stringtable.Middle.Column3]]
     },
-    VSeparator2: ["Text",       0,      PadY,                   W_VSEPARATOR,       800,        "0x11",                 ""],
+    VSeparator2: ["Text",       0,      PadY,                   W_VSEPARATOR,       850,        "0x11",                 ""],
     Right_Controls: {
         ;                                类型           横坐标   纵坐标                                                                               宽度                高度            选项         文本
         ;                                Type           X       Y                                                                                   Width               Height          Options     Text
@@ -366,7 +368,7 @@ UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop() {
  * 显示关于对话框。<br>Show about dialog box.
  */
 ShowAbout(*) {
-    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v2`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-09-20", "关于 | About", 0x40)
+    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.0.0`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-09-24`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
 }
 
 /**
@@ -422,6 +424,7 @@ CreateMainGui() {
     ActionButton_decunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecHPButton)
     ActionButton_incunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddResistButton)
     ActionButton_decunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecResistButton)
+    ActionButton_stacktear := AddCtrl(MyGui, 1, Config_default.Left_Controls.StackItemButton)
     ;;; 左侧第二分隔线（Second separator of the left part）
     AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator2)
     ;;; 自定义控制按钮（Custom control buttons）
@@ -518,6 +521,11 @@ CreateMainGui() {
     ActionConfigs["decunit10resistance"]["Key"] := "H"
     ActionConfigs["decunit10resistance"]["Button"] := ActionButton_decunit10resistance
     ActionConfigs["decunit10resistance"]["Description"] := "移除10双抗/Remove 10 Resistances"
+    ActionConfigs["stacktear"] := Map()
+    ActionConfigs["stacktear"]["ControlKeys"] := ["Shift"]
+    ActionConfigs["stacktear"]["Key"] := "A"
+    ActionConfigs["stacktear"]["Button"] := ActionButton_stacktear
+    ActionConfigs["stacktear"]["Description"] := "给装备叠层/Stack Items"
     ActionConfigs["custom"] := Map()
     ActionConfigs["custom"]["ControlKeys"] := []
     ActionConfigs["custom"]["Key"] := ""
@@ -537,6 +545,7 @@ CreateMainGui() {
     ActionButton_decunit100health.OnEvent("Click", (*) => StartAction("decunit100health"))
     ActionButton_incunit10resistance.OnEvent("Click", (*) => StartAction("incunit10resistance"))
     ActionButton_decunit10resistance.OnEvent("Click", (*) => StartAction("decunit10resistance"))
+    ActionButton_stacktear.OnEvent("Click", (*) => StartAction("stacktear"))
     ActionButton_custom.OnEvent("Click", (*) => StartCustom())
     ;; 按键序列操作（Key sequence operations）
     PushButton_custom.OnEvent("Click", PushSequence)
@@ -625,7 +634,7 @@ StartAction(actionId, *) {
     ProgressMonitorGui.SetFont("s10", "Microsoft YaHei")
     ProgressText := ProgressMonitorGui.Add("Text", "w350 Center", "正在初始化……`nInitializing ...") ; 添加进度文本（Add progress text）
     MonitorProgressBar := ProgressMonitorGui.Add("Progress", "w350 h20 Range0-100 -Smooth", 0) ; 添加进度条（Add progress bar）
-    MonitorStopButton := ProgressMonitorGui.Add("Button", "w80 h30 xp+135 y+10 Default", "中止/Abort") ; 3. 添加一个“强制中止”按钮（Add an "Abort" button）
+    MonitorStopButton := ProgressMonitorGui.Add("Button", "w80 h30 xp+135 y+10 Default", "中止/Abort") ; 添加一个“强制中止”按钮（Add an "Abort" button）
     MonitorStopButton.OnEvent("Click", StopAction)
     ProgressMonitorGui.Show("NoActivate") ; 显示这个监视窗口的同时避免抢走焦点（While this window is displayed, don't focus on it）
     
