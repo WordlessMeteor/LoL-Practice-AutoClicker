@@ -37,7 +37,7 @@ This program supports repetitively pressing the following three kinds of keys:
     - This allows users to customize a key combination to press repetitively. A key combination is composed of control keys and **a** single key.
     - When the user changes the default hotkey of those fixed functions, they can input the changed key combination in Area L3 and run it.
 3. Custom key combination sequence.
-    - This benefits the test of [Arena GoH Evelynn Easter Egg BUG](https://youtu.be/1oOkwDWpl7Y).
+    - This benefits the test of [Arena GoH Evelynn Easter Egg BUG](https://youtu.be/XOpag8x34Hw).
         - For example, the user may **push** Ctrl + 1 and Ctrl + 3 into the key sequence stack repetitively to let the champion alternate between joking and dancing, thus creating a server instant when there might be multiple players changing from not dancing into dancing if possible.
 
 Besides, this program supports parameter configuration on the right side, including the number of repeats, time interval between two successive key presses and abort hotkey.
