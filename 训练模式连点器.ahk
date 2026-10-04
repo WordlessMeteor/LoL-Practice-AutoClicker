@@ -185,7 +185,7 @@ Stringtable := {
             MeleeResetButton: "近战复位`nMelee Reset",
             RangedResetButton: "远程复位`nRanged Reset",
             ResetButton: "复位/Reset",
-            ResetAllButton: "复位全部变量`nReset all parameters"
+            ResetAllButton: "复位全部参数`nReset all parameters"
         },
         HelpDoc: "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/"
     }
@@ -368,7 +368,7 @@ UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop() {
  * 显示关于对话框。<br>Show about dialog box.
  */
 ShowAbout(*) {
-    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.0.1`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-10-04`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
+    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.0.2-beta`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-10-04`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
 }
 
 /**
@@ -387,7 +387,7 @@ RebuildUI() {
  * 构建主界面。<br>Create the main GUI.
  */
 CreateMainGui() {
-    global MyGui, SettingsMenu, ActionConfigs, StopButton, StatusText, ProgressBar, KeyEdit, CheckBox1, CheckBox2, CheckBox3, SequenceList, LoopEdit, RepeatNumber_text, IntervalEdit, Interval_text, StopKeyEdit, StopKey_text
+    global MyGui, SettingsMenu, ActionConfigs, RunSequenceButton, StopButton, StatusText, ProgressBar, KeyEdit, CheckBox1, CheckBox2, CheckBox3, SequenceList, LoopEdit, RepeatNumber_text, IntervalEdit, Interval_text, StopKeyEdit, StopKey_text
     ; 下面设置图形化界面（Set the graphical user interface）    
     MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
     ;; 标题（Title）
@@ -442,6 +442,7 @@ CreateMainGui() {
     PopButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PopButton)
     ClearButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.ClearButton)
     RunSequenceButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.RunSequenceButton)
+    RunSequenceButton.Enabled := false ; 程序运行之初，序列循环中一定没有元素（At the launch of the program, there can't be any elements in the sequence loop）
     ;;; 左侧第三分隔线（Third separator of the left part）
     AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator3)
     ;;; 状态栏（Status section）
@@ -986,10 +987,17 @@ ResetAllParameters(*) {
     ResetLoopCount(true)
     ResetInterval()
     ResetStopKey()
-    StatusText.Text := "所有变量已复位。`nAll parameters have been reset."
+    StatusText.Text := "所有参数已复位。`nAll parameters have been reset."
 }
 
 ; 按键序列操作（Key sequence operations）
+/**
+ * 决定“运行序列”按钮的可用性。<br>Determine the availability of the "Run Sequence" button.
+ */
+ToggleRunSequenceAvailability(*) {
+    RunSequenceButton.Enabled := keySeq.Length > 0
+}
+
 /**
  * 读取自定义部分的按键组合并压入按键序列栈。<br>Read the key combination in custom part and push it into the key sequence stack.
  */
@@ -1025,6 +1033,8 @@ PushSequence(*) {
     SequenceList.Add("", keySeq.Length, seqStr, interval)
     SequenceList.ModifyCol(2, "AutoHdr")
     SequenceList.ModifyCol(3, "AutoHdr")
+    ; 更新“运行序列”按钮的可用性（Update the availability of the "Run Sequence" button）
+    ToggleRunSequenceAvailability()
 }
 
 /**
@@ -1036,6 +1046,7 @@ PopSequence(*) {
         SequenceList.ModifyCol(2, "AutoHdr")
         SequenceList.ModifyCol(3, "AutoHdr")
         keySeq.Pop()
+        ToggleRunSequenceAvailability()
     }
 }
 
@@ -1047,4 +1058,5 @@ ClearSequence(*) {
     SequenceList.Delete()
     SequenceList.ModifyCol(2, "AutoHdr")
     SequenceList.ModifyCol(3, "AutoHdr")
+    ToggleRunSequenceAvailability()
 }
