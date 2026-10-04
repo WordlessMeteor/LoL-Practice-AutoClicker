@@ -368,7 +368,7 @@ UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop() {
  * 显示关于对话框。<br>Show about dialog box.
  */
 ShowAbout(*) {
-    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.0.0`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-10-03`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
+    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.0.1`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-10-04`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
 }
 
 /**
@@ -675,8 +675,9 @@ StartAction(actionId, *) {
             
             ; 发送按键（Send key press）
             back := false
-            for index, array, keyInterval in keySeq {
+            for index, array in keySeq {
                 keyToSend := array[1]
+                keyInterval := array[3]
                 try {
                     Send(keyToSend) ; 核心（Core）
                 } catch Error as e {
