@@ -22,7 +22,7 @@ interval := 0 ; 命令执行间隔（Command execution interval）
 K_Stop := "#s" ; 停止热键（Stop hotkey）
 singleKeyToHold := "" ; 待按住的单键（Single key to hold）
 K_HoldSingleKey := "!h" ; 按住单键热键（Single-key hold hotkey）
-K_HoldSingleKeySequence := "^h" ; 按住序列热键（Sequence hold hotkey）
+K_HoldSingleKeySequence := "^h" ; 按住单键序列热键（Single-key sequence hold hotkey）
 Hotkey(K_Stop, A_Stop, "On")
 HotKey(K_HoldSingleKey, A_HoldSingleKey, "On")
 HotKey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
@@ -519,13 +519,13 @@ CreateMainGui() {
     B_SingleKeyToHold_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateSingleKeyToHoldButton)
     T_SingleKeyToHold := AddCtrl(MyGui, 5, Config_default.Right_Controls.SingleKeyToHoldValue)
     B_SingleKeyToHold_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetSingleKeyToHoldButton)
-    ;;; 按住单键热键（Hold single key hotkey）
+    ;;; 按住单键热键（Single-key hold hotkey）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyLabel)
     E_HoldSingleKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyEdit)
     B_HoldSingleKey_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldSingleHotkeyButton)
     T_HoldSingleKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyValue)
     B_HoldSingleKey_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldSingleHotkeyButton)
-    ;;; 按住序列热键（Hold sequence hotkey）
+    ;;; 按住单键序列热键（Single-key sequence hold hotkey）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyLabel)
     E_HoldSequenceKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyEdit)
     B_HoldSequenceKey_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldSequenceHotkeyButton)
@@ -620,10 +620,10 @@ CreateMainGui() {
     ;;; 待按住的单键（Single key to hold）
     B_SingleKeyToHold_Update.OnEvent("Click", A_Param_SingleKeyToHold_UpdateValue)
     B_SingleKeyToHold_Reset.OnEvent("Click", A_Param_SingleKeyToHold_ResetValue)
-    ;;; 按住单键热键（Hold single key hotkey）
+    ;;; 按住单键热键（Single-key hold hotkey）
     B_HoldSingleKey_Update.OnEvent("Click", A_Param_HoldSingleKey_UpdateValue)
     B_HoldSingleKey_Reset.OnEvent("Click", A_Param_HoldSingleKey_ResetValue)
-    ;;; 按住序列热键（Hold sequence hotkey）
+    ;;; 按住单键序列热键（Single-key sequence hold hotkey）
     B_HoldSequenceKey_Update.OnEvent("Click", A_Param_HoldSingleKeySequence_UpdateValue)
     B_HoldSequenceKey_Reset.OnEvent("Click", A_Param_HoldSingleKeySequence_ResetValue)
     ;;; 全部复位（Reset all）
@@ -893,7 +893,7 @@ A_StartCustom(*) {
 
 ; 按住事件（Hold event）
 /**
- * 保持按住一个单键。<br>Keep a single key pressed.
+ * 按住一个单键。<br>Hold a single key.
  */
 A_HoldSingleKey(*) {
     if singleKeyToHold == ""
@@ -919,7 +919,7 @@ A_HoldSingleKey(*) {
 }
 
 /**
- * 保持同时按住序列中的多个单键。<br>Keep multiple single keys in the sequence pressed.
+ * 同时按住单键序列中的多个单键。<br>Hold multiple single keys in a single key sequence in the meantime.
  */
 A_HoldSingleKeySequence(*) {
     if !WinExist("League of Legends (TM) Client") {
@@ -1175,28 +1175,28 @@ A_Param_HoldSingleKey_ResetValue(*) {
 }
 
 /**
- * 读取按住序列热键编辑框并更新按住序列热键。<br>Read the sequence-key hold hotkey edit box and update the sequence-key hold key.
+ * 读取按住单键序列热键编辑框并更新按住单键序列热键。<br>Read the single-key sequence hold hotkey edit box and update the single-key sequence hold hotkey.
  */
 A_Param_HoldSingleKeySequence_UpdateValue(*) {
     global K_HoldSingleKeySequence
     inputValue := E_HoldSequenceKey.Value
     
     if (StrLen(inputValue) = 0) {
-        T_Status.Text := "请输入一个按住序列热键。`nPlease input a sequence-key hold hotkey."
+        T_Status.Text := "请输入一个按住单键序列热键。`nPlease input a single-key sequence hold hotkey."
     }
     else if VerifyKeyValidity(inputValue) {
         Hotkey(K_HoldSingleKeySequence, "Off")
         K_HoldSingleKeySequence := inputValue
         A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence)
         Hotkey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
-        T_Status.Text := "按住序列热键已更新。`nThe sequence-key hold hotkey has been updated."
+        T_Status.Text := "按住单键序列热键已更新。`nThe single-key sequence hold hotkey has been updated."
     }
     else 
-        T_Status.Text := "无效的按住序列热键。`nInvalid sequence-key hold hotkey."
+        T_Status.Text := "无效的按住单键序列热键。`nInvalid single-key sequence hold hotkey."
 }
 
 /**
- * 更新按住序列热键的显示。<br>Update the display of sequence-key hold hotkey.
+ * 更新按住单键序列热键的显示。<br>Update the display of the single-key sequence hold hotkey.
  * @param {String} K_HoldSingleKeySequence 有效的按住单键序列的热键字符串。<br>VALID string of the hotkey to hold the single key sequence.
  */
 A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence) {
@@ -1204,7 +1204,7 @@ A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence) {
 }
 
 /**
- * 重置按住序列热键。<br>Reset the sequence-key hold hotkey.
+ * 重置按住单键序列热键。<br>Reset the single-key sequence hold hotkey.
  */
 A_Param_HoldSingleKeySequence_ResetValue(*) {
     global K_HoldSingleKeySequence
@@ -1212,7 +1212,7 @@ A_Param_HoldSingleKeySequence_ResetValue(*) {
     K_HoldSingleKeySequence := "^h"
     A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence)
     Hotkey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
-    T_Status.Text := "按住序列热键已复位。`nThe sequence-key hold hotkey has been reset."
+    T_Status.Text := "按住单键序列热键已复位。`nThe single-key sequence hold hotkey has been reset."
 }
 
 ; 重置所有参数（Reset all parameters）
