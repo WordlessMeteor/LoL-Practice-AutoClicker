@@ -901,8 +901,13 @@ A_HoldSingleKeySequence(*) {
         return 2
     }
     else {
+        singleKeysToHold := Map() ; 只用到键（Only keys are used）
         for index, array in keySeq {
             keyStr := array[2]
+            if !singleKeysToHold.Has(keyStr)
+                singleKeysToHold[keyStr] := true
+        }
+        for keyStr, _ in singleKeysToHold {
             try {
                 Send("{" keyStr " Down}")
             } catch Error as e {
