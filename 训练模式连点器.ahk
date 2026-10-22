@@ -19,13 +19,13 @@ MsgBox "本脚本依赖于AutoHotKey v2.0。`nThis program relies on AutoHotKey 
 ; 初始化全局变量（Initialize global variables）
 maxLoops := 1980 ; 重复次数（Repetition times）
 interval := 0 ; 命令执行间隔（Command execution interval）
-stopKey := "#s" ; 停止热键（Stop hotkey）
+K_Stop := "#s" ; 停止热键（Stop hotkey）
 singleKeyToHold := "" ; 待按住的单键（Single key to hold）
-holdSingleKey := "!h" ; 按住单键热键（Single-key hold hotkey）
-holdSequenceKey := "^h" ; 按住序列热键（Sequence hold hotkey）
-Hotkey(stopKey, StopAction, "On")
-HotKey(holdSingleKey, HoldSingleAction, "On")
-HotKey(holdSequenceKey, HoldSequenceAction, "On")
+K_HoldSingleKey := "!h" ; 按住单键热键（Single-key hold hotkey）
+K_HoldSingleKeySequence := "^h" ; 按住序列热键（Sequence hold hotkey）
+Hotkey(K_Stop, A_Stop, "On")
+HotKey(K_HoldSingleKey, A_HoldSingleKey, "On")
+HotKey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
 keySeq := [] ; 按键序列。每个元素是一个数组；每个数组的第一个元素是按键代码，第二个元素是按键的字符串表示，第三个元素是按下这个按键后经历多少延迟（Key sequence. Each element is an array; the first element of each array is key code, the second element is the string representation of the key to press, and the third element is how much time to wait after this key is pressed）
 IsRunning := false ; 标记是否在执行某个功能（Mark whether a function is being performed）
 StopRequested := false ; 标记用户是否请求中止（Mark whether the user has requested to abort）
@@ -268,7 +268,7 @@ Config_default := {
         IntervalValue:                  ["Text",        440,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L + 5,                                             90,                 H_TEXT_1L,      "",         ""],
         ResetIntervalButton:            ["Button",      530,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
         AbortHotkeyLabel:               ["Text",        0,      PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L + 5,                               220,                H_TEXT_1L,      "",         Stringtable.Right.Config.AbortHotkeyPrompt],
-        AbortHotkeyEdit:                ["Edit",        220,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   80,                 H_EDIT_1L,      "",         stopKey],
+        AbortHotkeyEdit:                ["Edit",        220,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   80,                 H_EDIT_1L,      "",         K_Stop],
         UpdateAbortHotkeyButton:        ["Button",      310,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
         AbortHotkeyValue:               ["Text",        440,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L + 5,                               90,                 H_TEXT_1L,      "",         ""],
         ResetAbortHotkeyButton:         ["Button",      530,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
@@ -278,12 +278,12 @@ Config_default := {
         SingleKeyToHoldValue:           ["Text",        440,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                    90,                 H_TEXT_1L,      "",         ""],
         ResetSingleKeyToHoldButton:     ["Button",      530,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
         HoldSingleHotkeyLabel:          ["Text",        0,      PadY * 6 + H_TEXT_2L * 2 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                       220,                H_TEXT_2L,      "",         Stringtable.Right.Config.HoldSingleKeyHotkeyPrompt],
-        HoldSingleHotkeyEdit:           ["Edit",        220,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        80,                 H_EDIT_1L,      "",         holdSingleKey],
+        HoldSingleHotkeyEdit:           ["Edit",        220,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        80,                 H_EDIT_1L,      "",         K_HoldSingleKey],
         UpdateHoldSingleHotkeyButton:   ["Button",      310,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
         HoldSingleHotkeyValue:          ["Text",        440,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                    90,                 H_TEXT_1L,      "",         ""],
         ResetHoldSingleHotkeyButton:    ["Button",      530,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
         HoldSequenceHotkeyLabel:        ["Text",        0,      PadY * 7 + H_TEXT_2L * 3 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                       220,                H_TEXT_2L,      "",         Stringtable.Right.Config.HoldSequenceHotkeyPrompt],
-        HoldSequenceHotkeyEdit:         ["Edit",        220,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        80,                 H_EDIT_1L,      "",         holdSequenceKey],
+        HoldSequenceHotkeyEdit:         ["Edit",        220,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        80,                 H_EDIT_1L,      "",         K_HoldSingleKeySequence],
         UpdateHoldSequenceHotkeyButton: ["Button",      310,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
         HoldSequenceHotkeyValue:        ["Text",        440,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                    90,                 H_TEXT_1L,      "",         ""],
         ResetHoldSequenceHotkeyButton:  ["Button",      530,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
@@ -366,7 +366,7 @@ SetFontSize(n, *) {
  * 
  * 警告：此操作将重置页面所有状态。<br>Warning: This operation resets all status in the interface.
  */
-ToggleBold(*) {
+Settings_Toggle_Bold(*) {
     global IsBold
     IsBold := !IsBold
     SetFontSize(CURRENT_FONT_SIZE)
@@ -375,16 +375,16 @@ ToggleBold(*) {
 /**
  * 切换进度小窗口置顶状态。<br>Toggle the progress monitor window to become always on top or not.
  */
-ToggleSettingsOption_ProgressMonitorAlwaysOnTop(*) {
+Settings_Toggle_ProgressMionitorAlwaysOnTop(*) {
     global ProgressMonitorAlwaysOnTop
     ProgressMonitorAlwaysOnTop := !ProgressMonitorAlwaysOnTop
-    UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop()
+    Settings_Update_ProgressMonitorAlwaysOnTop()
 }
 
 /**
  * 更新执行进度置顶设置的勾选状态。<br>Update the check status of "Progress always on top" settings option.
  */
-UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop() {
+Settings_Update_ProgressMonitorAlwaysOnTop() {
     if ProgressMonitorAlwaysOnTop
         SettingsMenu.Check("执行进度置顶 | Progress always on top")
     else
@@ -414,7 +414,7 @@ RebuildUI() {
  * 构建主界面。<br>Create the main GUI.
  */
 CreateMainGui() {
-    global MyGui, SettingsMenu, ActionConfigs, HoldSequenceButton, RunSequenceButton, StopButton, StatusText, ProgressBar, KeyEdit, CheckBox1, CheckBox2, CheckBox3, SequenceList, LoopEdit, RepeatNumber_text, IntervalEdit, Interval_text, StopKeyEdit, StopKey_text, SingleKeyToHoldEdit, HoldSingleKeyEdit, SingleKeyToHold_text, HoldSingleKey_text, HoldSequenceKeyEdit, HoldSequenceKey_text
+    global MyGui, SettingsMenu, ActionConfigs, B_HoldSequence, B_RunSequence, B_Stop, T_Status, P_Progress, E_SingleKey, CheckBox1, CheckBox2, CheckBox3, L_KeySequence, E_Repetition, T_Repetition, E_Interval, T_Interval, E_StopKey, T_StopKey, E_SingleKeyToHold, E_HoldSingleKey, T_SingleKeyToHold, T_HoldSingleKey, E_HoldSequenceKey, T_HoldSequenceKey
     ; 下面设置图形化界面（Set the graphical user interface）    
     MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
     ;; 标题（Title）
@@ -430,11 +430,11 @@ CreateMainGui() {
             FontSizeMenu.Check(A_Index)
     }
     SettingsMenu.Add("字号 | Font size", FontSizeMenu)
-    SettingsMenu.Add("加粗 | Bold", ToggleBold)
+    SettingsMenu.Add("加粗 | Bold", Settings_Toggle_Bold)
     if IsBold
         SettingsMenu.Check("加粗 | Bold")
-    SettingsMenu.Add("执行进度置顶 | Progress always on top", ToggleSettingsOption_ProgressMonitorAlwaysOnTop)
-    UpdateSettingsOptionStatus_ProgressMonitorAlwaysOnTop()
+    SettingsMenu.Add("执行进度置顶 | Progress always on top", Settings_Toggle_ProgressMionitorAlwaysOnTop)
+    Settings_Update_ProgressMonitorAlwaysOnTop()
     MyMenu.Add("设置 | Settings", SettingsMenu)
     MyMenu.Add("关于 | About", ShowAbout)
     MyGui.MenuBar := MyMenu
@@ -445,13 +445,13 @@ CreateMainGui() {
     ;;; 左侧第一分隔线（First separator of the left part）
     AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator1) ; 添加水平分隔线（Add horizontal separator）
     ;;; 动作按钮（Action buttons）
-    ActionButton_incgold := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddGoldButton)
-    ActionButton_inclevel := AddCtrl(MyGui, 1, Config_default.Left_Controls.LevelUpButton)
-    ActionButton_incunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddHPButton)
-    ActionButton_decunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecHPButton)
-    ActionButton_incunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddResistButton)
-    ActionButton_decunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecResistButton)
-    ActionButton_stacktear := AddCtrl(MyGui, 1, Config_default.Left_Controls.StackItemButton)
+    B_Action_incgold := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddGoldButton)
+    B_Action_inclevel := AddCtrl(MyGui, 1, Config_default.Left_Controls.LevelUpButton)
+    B_Action_incunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddHPButton)
+    B_Action_decunit100health := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecHPButton)
+    B_Action_incunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.AddResistButton)
+    B_Action_decunit10resistance := AddCtrl(MyGui, 1, Config_default.Left_Controls.DecResistButton)
+    B_Action_stacktear := AddCtrl(MyGui, 1, Config_default.Left_Controls.StackItemButton)
     ;;; 左侧第二分隔线（Second separator of the left part）
     AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator2)
     ;;; 自定义控制按钮（Custom control buttons）
@@ -461,34 +461,34 @@ CreateMainGui() {
     CheckBox2 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox2)
     CheckBox3 := AddCtrl(MyGui, 1, Config_default.Left_Controls.Checkbox3)
     AddCtrl(MyGui, 1, Config_default.Left_Controls.CustomPrompt)
-    KeyEdit := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyEdit)
-    HoldSingleButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyHoldButton)
-    ActionButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyRunButton)
+    E_SingleKey := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyEdit)
+    B_HoldSingleKey := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyHoldButton)
+    B_Action_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.SingleKeyRunButton)
     ;;;; 序列循环（Sequence loop）
     AddCtrl(MyGui, 1, Config_default.Left_Controls.SequenceLoopTitle)
-    PushButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PushButton)
-    PopButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.PopButton)
-    ClearButton_custom := AddCtrl(MyGui, 1, Config_default.Left_Controls.ClearButton)
-    HoldSequenceButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.HoldSequenceButton)
-    HoldSequenceButton.Enabled := false ; 程序运行之初，序列循环中一定没有元素（At the launch of the program, there can't be any elements in the sequence loop）
-    RunSequenceButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.RunSequenceButton)
-    RunSequenceButton.Enabled := false
+    B_PushSequence := AddCtrl(MyGui, 1, Config_default.Left_Controls.PushButton)
+    B_PopSequence := AddCtrl(MyGui, 1, Config_default.Left_Controls.PopButton)
+    B_ClearSequence := AddCtrl(MyGui, 1, Config_default.Left_Controls.ClearButton)
+    B_HoldSequence := AddCtrl(MyGui, 1, Config_default.Left_Controls.HoldSequenceButton)
+    B_HoldSequence.Enabled := false ; 程序运行之初，序列循环中一定没有元素（At the launch of the program, there can't be any elements in the sequence loop）
+    B_RunSequence := AddCtrl(MyGui, 1, Config_default.Left_Controls.RunSequenceButton)
+    B_RunSequence.Enabled := false
     ;;; 左侧第三分隔线（Third separator of the left part）
     AddCtrl(MyGui, 1, Config_default.Left_Controls.Separator3)
     ;;; 状态栏（Status section）
-    StopButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.StopButton)
+    B_Stop := AddCtrl(MyGui, 1, Config_default.Left_Controls.StopButton)
     ;;;; 状态视觉元素（Status visual elements）
-    StatusText := AddCtrl(MyGui, 1, Config_default.Left_Controls.StatusText) ; 添加状态显示（Add status display）
-    ProgressBar := AddCtrl(MyGui, 1, Config_default.Left_Controls.ProgressBar) ; 添加一个隐藏的进度条，用于视觉反馈（Add a hidden progress bar for visual feedback）
+    T_Status := AddCtrl(MyGui, 1, Config_default.Left_Controls.StatusText) ; 添加状态显示（Add status display）
+    P_Progress := AddCtrl(MyGui, 1, Config_default.Left_Controls.ProgressBar) ; 添加一个隐藏的进度条，用于视觉反馈（Add a hidden progress bar for visual feedback）
     ;;; 退出按钮（Exit button）
-    QuitButton := AddCtrl(MyGui, 1, Config_default.Left_Controls.ExitButton) ; 添加退出按钮（Add exit button）
+    B_Quit := AddCtrl(MyGui, 1, Config_default.Left_Controls.ExitButton) ; 添加退出按钮（Add exit button）
     ;; 第一垂直分隔线（First vertical separator）
     AddCtrl(MyGui, 2, Config_default.VSeparator1)
     ;; 中间——按键序列（Middle part - key sequence）
     AddCtrl(MyGui, 3, Config_default.Middle_Controls.Title)
-    SequenceList := AddCtrl(MyGui, 3, Config_default.Middle_Controls.List)
-    SequenceList.ModifyCol(2, "AutoHdr")
-    SequenceList.ModifyCol(3, "AutoHdr")
+    L_KeySequence := AddCtrl(MyGui, 3, Config_default.Middle_Controls.List)
+    L_KeySequence.ModifyCol(2, "AutoHdr")
+    L_KeySequence.ModifyCol(3, "AutoHdr")
     ;; 第二垂直分隔线（Second vertical separator）
     AddCtrl(MyGui, 4, Config_default.VSeparator2)
     ;; 右侧——参数配置（Right part - parameter configuration）
@@ -496,148 +496,148 @@ CreateMainGui() {
     AddCtrl(MyGui, 5, Config_default.Right_Controls.Title)
     ;;; 重复次数（Repetition）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionLabel)
-    LoopEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionEdit)
-    Repeat_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateRepetitionButton)
-    RepeatNumber_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionValue)
-    MeleeRepeat_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.MeleeResetRepetitionButton)
-    RangedRepeat_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.RangedResetRepetitionButton)
+    E_Repetition := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionEdit)
+    B_Repetition_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateRepetitionButton)
+    T_Repetition := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionValue)
+    B_Repetition_Reset_Melee := AddCtrl(MyGui, 5, Config_default.Right_Controls.MeleeResetRepetitionButton)
+    B_Repetition_Reset_Ranged := AddCtrl(MyGui, 5, Config_default.Right_Controls.RangedResetRepetitionButton)
     ;;; 命令执行间隔（Command execution interval）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalLabel) ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
-    IntervalEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalEdit)
-    Interval_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateIntervalButton)
-    Interval_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalValue)
-    Interval_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetIntervalButton)
+    E_Interval := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalEdit)
+    B_Interval_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateIntervalButton)
+    T_Interval := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalValue)
+    B_Interval_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetIntervalButton)
     ;;; 中止热键（Abort hotkey）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyLabel)
-    StopKeyEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyEdit)
-    StopKey_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateAbortHotkeyButton)
-    StopKey_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyValue)
-    StopKey_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAbortHotkeyButton)
+    E_StopKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyEdit)
+    B_StopKey_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateAbortHotkeyButton)
+    T_StopKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyValue)
+    B_StopKey_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAbortHotkeyButton)
     ;;; 待按住的单键（Single key to hold）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.SingleKeyToHoldLabel)
-    SingleKeyToHoldEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.SingleKeyToHoldEdit)
-    SingleKeyToHold_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateSingleKeyToHoldButton)
-    SingleKeyToHold_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.SingleKeyToHoldValue)
-    SingleKeyToHold_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetSingleKeyToHoldButton)
+    E_SingleKeyToHold := AddCtrl(MyGui, 5, Config_default.Right_Controls.SingleKeyToHoldEdit)
+    B_SingleKeyToHold_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateSingleKeyToHoldButton)
+    T_SingleKeyToHold := AddCtrl(MyGui, 5, Config_default.Right_Controls.SingleKeyToHoldValue)
+    B_SingleKeyToHold_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetSingleKeyToHoldButton)
     ;;; 按住单键热键（Hold single key hotkey）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyLabel)
-    HoldSingleKeyEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyEdit)
-    HoldSingleKey_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldSingleHotkeyButton)
-    HoldSingleKey_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyValue)
-    HoldSingleKey_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldSingleHotkeyButton)
+    E_HoldSingleKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyEdit)
+    B_HoldSingleKey_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldSingleHotkeyButton)
+    T_HoldSingleKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyValue)
+    B_HoldSingleKey_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldSingleHotkeyButton)
     ;;; 按住序列热键（Hold sequence hotkey）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyLabel)
-    HoldSequenceKeyEdit := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyEdit)
-    HoldSequenceKey_UpdateButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldSequenceHotkeyButton)
-    HoldSequenceKey_text := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyValue)
-    HoldSequenceKey_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldSequenceHotkeyButton)
+    E_HoldSequenceKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyEdit)
+    B_HoldSequenceKey_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldSequenceHotkeyButton)
+    T_HoldSequenceKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyValue)
+    B_HoldSequenceKey_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldSequenceHotkeyButton)
     ;;; 全参数复位按钮（Button to reset all parameters）
-    AllParameter_ResetButton := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAllParameterButton)
+    B_All_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAllParameterButton)
     ;; 右侧第一分隔线（First separator of the left part）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.Separator) ; 添加水平分隔线（Add horizontal separator）
     ;; 按键格式说明文本（Key format instruction text）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyHelpDoc)
     
     ; 动作配置（Action config）
-    ActionConfigs := Map() ; 设置用于StartAction的动作配置表（Set up an action config table for StartAction process）
+    ActionConfigs := Map() ; 设置用于`A_StartAction`的动作配置表（Set up an action config table for `A_StartAction` process）
     ActionConfigs["incgold"] := Map() ; 每个动作也是一个Map对象，分别包含要按下的控制键、按键、要松开的控制键、按钮对象和描述（Each action is also a Map object, containing the control keys to press, the key, the control keys to release, the button object and the description）
     ActionConfigs["incgold"]["ControlKeys"] := ["Shift"] ; 表明要被持续按住的键（Indicates the key to be held down）
     ActionConfigs["incgold"]["Key"] := "T"
-    ActionConfigs["incgold"]["Button"] := ActionButton_incgold
+    ActionConfigs["incgold"]["Button"] := B_Action_incgold
     ActionConfigs["incgold"]["Description"] := "增加金钱/Add Gold"
     ActionConfigs["inclevel"] := Map()
     ActionConfigs["inclevel"]["ControlKeys"] := ["Shift"]
     ActionConfigs["inclevel"]["Key"] := "Y"
-    ActionConfigs["inclevel"]["Button"] := ActionButton_inclevel
+    ActionConfigs["inclevel"]["Button"] := B_Action_inclevel
     ActionConfigs["inclevel"]["Description"] := "升级/Level Up"
     ActionConfigs["incunit100health"] := Map()
     ActionConfigs["incunit100health"]["ControlKeys"] := ["Ctrl", "Shift"]
     ActionConfigs["incunit100health"]["Key"] := "T"
-    ActionConfigs["incunit100health"]["Button"] := ActionButton_incunit100health
+    ActionConfigs["incunit100health"]["Button"] := B_Action_incunit100health
     ActionConfigs["incunit100health"]["Description"] := "添加100最大生命值/Add 100 Max HP"
     ActionConfigs["decunit100health"] := Map()
     ActionConfigs["decunit100health"]["ControlKeys"] := ["Ctrl", "Shift"]
     ActionConfigs["decunit100health"]["Key"] := "Y"
-    ActionConfigs["decunit100health"]["Button"] := ActionButton_decunit100health
+    ActionConfigs["decunit100health"]["Button"] := B_Action_decunit100health
     ActionConfigs["decunit100health"]["Description"] := "移除100最大生命值/Remove 100 Max HP"
     ActionConfigs["incunit10resistance"] := Map()
     ActionConfigs["incunit10resistance"]["ControlKeys"] := ["Ctrl", "Shift"]
     ActionConfigs["incunit10resistance"]["Key"] := "G"
-    ActionConfigs["incunit10resistance"]["Button"] := ActionButton_incunit10resistance
+    ActionConfigs["incunit10resistance"]["Button"] := B_Action_incunit10resistance
     ActionConfigs["incunit10resistance"]["Description"] := "添加10双抗/Add 10 Resistances"
     ActionConfigs["decunit10resistance"] := Map()
     ActionConfigs["decunit10resistance"]["ControlKeys"] := ["Ctrl", "Shift"]
     ActionConfigs["decunit10resistance"]["Key"] := "H"
-    ActionConfigs["decunit10resistance"]["Button"] := ActionButton_decunit10resistance
+    ActionConfigs["decunit10resistance"]["Button"] := B_Action_decunit10resistance
     ActionConfigs["decunit10resistance"]["Description"] := "移除10双抗/Remove 10 Resistances"
     ActionConfigs["stacktear"] := Map()
     ActionConfigs["stacktear"]["ControlKeys"] := ["Shift"]
     ActionConfigs["stacktear"]["Key"] := "A"
-    ActionConfigs["stacktear"]["Button"] := ActionButton_stacktear
+    ActionConfigs["stacktear"]["Button"] := B_Action_stacktear
     ActionConfigs["stacktear"]["Description"] := "给装备叠层/Stack Items"
     ActionConfigs["custom"] := Map()
     ActionConfigs["custom"]["ControlKeys"] := []
     ActionConfigs["custom"]["Key"] := ""
-    ActionConfigs["custom"]["Button"] := ActionButton_custom
+    ActionConfigs["custom"]["Button"] := B_Action_custom
     ActionConfigs["custom"]["Description"] := "自定义/Custom"
     ActionConfigs["sequence"] := Map()
     ; ActionConfigs["sequence"]["ControlKeys"] := []
     ; ActionConfigs["sequence"]["Key"] := ""
-    ActionConfigs["sequence"]["Button"] := RunSequenceButton
+    ActionConfigs["sequence"]["Button"] := B_RunSequence
     ActionConfigs["sequence"]["Description"] := "序列循环/Sequence Loop"
     
     ; 为按钮绑定事件（Bind events to buttons）
     ;; 动作按钮（Action buttons）
-    ActionButton_incgold.OnEvent("Click", (*) => StartAction("incgold"))
-    ActionButton_inclevel.OnEvent("Click", (*) => StartAction("inclevel"))
-    ActionButton_incunit100health.OnEvent("Click", (*) => StartAction("incunit100health"))
-    ActionButton_decunit100health.OnEvent("Click", (*) => StartAction("decunit100health"))
-    ActionButton_incunit10resistance.OnEvent("Click", (*) => StartAction("incunit10resistance"))
-    ActionButton_decunit10resistance.OnEvent("Click", (*) => StartAction("decunit10resistance"))
-    ActionButton_stacktear.OnEvent("Click", (*) => StartAction("stacktear"))
-    ActionButton_custom.OnEvent("Click", (*) => StartCustom())
-    HoldSingleButton.OnEvent("Click", (*) => HoldSingleAction())
+    B_Action_incgold.OnEvent("Click", (*) => A_StartAction("incgold"))
+    B_Action_inclevel.OnEvent("Click", (*) => A_StartAction("inclevel"))
+    B_Action_incunit100health.OnEvent("Click", (*) => A_StartAction("incunit100health"))
+    B_Action_decunit100health.OnEvent("Click", (*) => A_StartAction("decunit100health"))
+    B_Action_incunit10resistance.OnEvent("Click", (*) => A_StartAction("incunit10resistance"))
+    B_Action_decunit10resistance.OnEvent("Click", (*) => A_StartAction("decunit10resistance"))
+    B_Action_stacktear.OnEvent("Click", (*) => A_StartAction("stacktear"))
+    B_Action_custom.OnEvent("Click", (*) => A_StartCustom())
+    B_HoldSingleKey.OnEvent("Click", (*) => A_HoldSingleKey())
     ;; 按键序列操作（Key sequence operations）
-    PushButton_custom.OnEvent("Click", PushSequence)
-    PopButton_custom.OnEvent("Click", PopSequence)
-    ClearButton_custom.OnEvent("Click", ClearSequence)
-    HoldSequenceButton.OnEvent("Click", (*) => HoldSequenceAction())
-    RunSequenceButton.OnEvent("Click", (*) => StartAction("sequence"))
+    B_PushSequence.OnEvent("Click", A_KeySequence_Push)
+    B_PopSequence.OnEvent("Click", A_KeySequence_Pop)
+    B_ClearSequence.OnEvent("Click", A_KeySequence_Clear)
+    B_HoldSequence.OnEvent("Click", (*) => A_HoldSingleKeySequence())
+    B_RunSequence.OnEvent("Click", (*) => A_StartAction("sequence"))
     ;; 退出按钮（Exit button）
-    StopButton.OnEvent("Click", StopAction)
-    QuitButton.OnEvent("Click", (*) => ExitApp())
+    B_Stop.OnEvent("Click", A_Stop)
+    B_Quit.OnEvent("Click", (*) => ExitApp())
     ;; 参数设置（Parameter configuration）
     ;;; 重复次数（Repetition）
-    Repeat_UpdateButton.OnEvent("Click", UpdateLoopCount)
-    MeleeRepeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(false))
-    RangedRepeat_ResetButton.OnEvent("Click", (*) => ResetLoopCount(true))
+    B_Repetition_Update.OnEvent("Click", A_Param_Repetition_UpdateValue)
+    B_Repetition_Reset_Melee.OnEvent("Click", (*) => A_Param_Repetition_ResetValue(false))
+    B_Repetition_Reset_Ranged.OnEvent("Click", (*) => A_Param_Repetition_ResetValue(true))
     ;;; 命令执行间隔（Command execution interval）
-    Interval_UpdateButton.OnEvent("Click", UpdateInterval)
-    Interval_ResetButton.OnEvent("Click", ResetInterval)
+    B_Interval_Update.OnEvent("Click", A_Param_Interval_UpdateValue)
+    B_Interval_Reset.OnEvent("Click", A_Param_Interval_ResetValue)
     ;;; 中止热键（Abort hotkey）
-    StopKey_UpdateButton.OnEvent("Click", UpdateStopKey)
-    StopKey_ResetButton.OnEvent("Click", ResetStopKey)
+    B_StopKey_Update.OnEvent("Click", A_Param_StopKey_UpdateValue)
+    B_StopKey_Reset.OnEvent("Click", A_Param_StopKey_ResetValue)
     ;;; 待按住的单键（Single key to hold）
-    SingleKeyToHold_UpdateButton.OnEvent("Click", UpdateSingleKeyToHold)
-    SingleKeyToHold_ResetButton.OnEvent("Click", ResetSingleKeyToHold)
+    B_SingleKeyToHold_Update.OnEvent("Click", A_Param_SingleKeyToHold_UpdateValue)
+    B_SingleKeyToHold_Reset.OnEvent("Click", A_Param_SingleKeyToHold_ResetValue)
     ;;; 按住单键热键（Hold single key hotkey）
-    HoldSingleKey_UpdateButton.OnEvent("Click", UpdateHoldSingleKey)
-    HoldSingleKey_ResetButton.OnEvent("Click", ResetHoldSingleKey)
+    B_HoldSingleKey_Update.OnEvent("Click", A_Param_HoldSingleKey_UpdateValue)
+    B_HoldSingleKey_Reset.OnEvent("Click", A_Param_HoldSingleKey_ResetValue)
     ;;; 按住序列热键（Hold sequence hotkey）
-    HoldSequenceKey_UpdateButton.OnEvent("Click", UpdateHoldSequenceKey)
-    HoldSequenceKey_ResetButton.OnEvent("Click", ResetHoldSequenceKey)
+    B_HoldSequenceKey_Update.OnEvent("Click", A_Param_HoldSingleKeySequence_UpdateValue)
+    B_HoldSequenceKey_Reset.OnEvent("Click", A_Param_HoldSingleKeySequence_ResetValue)
     ;;; 全部复位（Reset all）
-    AllParameter_ResetButton.OnEvent("Click", ResetAllParameters)
+    B_All_Reset.OnEvent("Click", A_Param_All_Reset)
     ;; 设置窗口关闭和Esc键事件（Set windows close event）
     MyGui.OnEvent("Close", (*) => ExitApp())  ; 点击右上角×（Click on the "×" button on the top-right corner）
     ; MyGui.OnEvent("Escape", (*) => ExitApp()) ; 按Esc键关闭程序。暂时禁用（Press "Esc" to close the app. Temporarily disabled）
     
     ; 其它准备工作（Other preparations）
-    UpdateRepetitionText(maxLoops)
-    UpdateIntervalText(interval)
-    UpdateStopKeyText(stopKey)
-    UpdateHoldSingleKeyText(holdSingleKey)
-    UpdateHoldSequenceKeyText(holdSequenceKey)
+    A_Param_Repetition_UpdateDisplay(maxLoops)
+    A_Param_Interval_UpdateDisplay(interval)
+    A_Param_StopKey_UpdateDisplay(K_Stop)
+    A_Param_HoldSingleKey_UpdateDisplay(K_HoldSingleKey)
+    A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence)
     SetTitleMatchMode(3) ; 设置窗口名称精确匹配（Set the window to be matched the exact name）
 }
 
@@ -659,22 +659,22 @@ MyGui.Show()
  * - custom: 自定义单键。<br>Custom single key.
  * - sequence: 按键序列。<br>Key sequence.
  */
-StartAction(actionId, *) {
+A_StartAction(actionId, *) {
     global IsRunning, StopRequested
     config := ActionConfigs[actionId]
     
     ; 控制标志（Control flags）
     startBtn := config["Button"]
     startBtn.Enabled := false       ; 禁用开始按钮（Disable the start button）
-    StopButton.Enabled := true      ; 启用停止按钮（Enable stop button）
+    B_Stop.Enabled := true      ; 启用停止按钮（Enable stop button）
     StopRequested := false          ; 标记用户是否发送了停止的请求。按下停止按钮时，该变量置为真（Marks whether the user has send the stop request. By clicking the stop button, this variable is set as true）
     
     ; 检查游戏窗口（Check window）
     if !WinExist("League of Legends (TM) Client") {
         MsgBox("未找到英雄联盟游戏进程。请确保您已启动一场对局。`nLeague of Legends.exe not found. Please make sure you've started a game.", "错误/Error", 0x10)
         startBtn.Enabled := true
-        StopButton.Enabled := false
-        StatusText.Text := "错误：未找到游戏窗口。`nError: Game window not found."
+        B_Stop.Enabled := false
+        T_Status.Text := "错误：未找到游戏窗口。`nError: Game window not found."
         return 1
     }
     
@@ -686,18 +686,18 @@ StartAction(actionId, *) {
     
     if (result = "Cancel") {
         startBtn.Enabled := true
-        StopButton.Enabled := false
-        StatusText.Text := "已取消。`nCancelled."
+        B_Stop.Enabled := false
+        T_Status.Text := "已取消。`nCancelled."
         return 0
     }
     
     ; 创建监视对话框（Create a monitor dialog box）
     ProgressMonitorGui := Gui((ProgressMonitorAlwaysOnTop ? "+AlwaysOnTop" : "") " +ToolWindow +Border", "执行中…… | Running ...")
     ProgressMonitorGui.SetFont("s10", "Microsoft YaHei")
-    ProgressText := ProgressMonitorGui.Add("Text", "w350 Center", "正在初始化……`nInitializing ...") ; 添加进度文本（Add progress text）
-    MonitorProgressBar := ProgressMonitorGui.Add("Progress", "w350 h20 Range0-100 -Smooth", 0) ; 添加进度条（Add progress bar）
-    MonitorStopButton := ProgressMonitorGui.Add("Button", "w80 h30 xp+135 y+10 Default", "中止/Abort") ; 添加一个“强制中止”按钮（Add an "Abort" button）
-    MonitorStopButton.OnEvent("Click", StopAction)
+    T_Progress_Monitor := ProgressMonitorGui.Add("Text", "w350 Center", "正在初始化……`nInitializing ...") ; 添加进度文本（Add progress text）
+    P_Progress_Monitor := ProgressMonitorGui.Add("Progress", "w350 h20 Range0-100 -Smooth", 0) ; 添加进度条（Add progress bar）
+    B_Stop_Monitor := ProgressMonitorGui.Add("Button", "w80 h30 xp+135 y+10 Default", "中止/Abort") ; 添加一个“强制中止”按钮（Add an "Abort" button）
+    B_Stop_Monitor.OnEvent("Click", A_Stop)
     ProgressMonitorGui.Show("NoActivate") ; 显示这个监视窗口的同时避免抢走焦点（While this window is displayed, don't focus on it）
     
     ; 设置循环计数器（Define loop counter）
@@ -705,17 +705,17 @@ StartAction(actionId, *) {
     
     ; 开始执行（Start to execute）
     IsRunning := true
-    StatusText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
-    ProgressBar.Value := 0
+    T_Status.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+    P_Progress.Value := 0
     
     ; 激活游戏窗口（Activate the window）
     try {
         WinActivate("League of Legends (TM) Client")
         Sleep(500) ; 等待窗口激活（Wait for the window to activate）
     } catch Error as e {
-        StatusText.Text := "错误：无法激活游戏窗口。`nError: Failed to activate the game window."
+        T_Status.Text := "错误：无法激活游戏窗口。`nError: Failed to activate the game window."
         startBtn.Enabled := true
-        StopButton.Enabled := false
+        B_Stop.Enabled := false
         IsRunning := false
         return 2
     }
@@ -725,13 +725,13 @@ StartAction(actionId, *) {
         Loop maxLoops {
             ; 检查停止请求（Check stop request）
             if StopRequested {
-                StatusText.Text := Format("已停止！执行次数：{1:d}。`nStopped! Number of times: {1:d}.", loopCount)
+                T_Status.Text := Format("已停止！执行次数：{1:d}。`nStopped! Number of times: {1:d}.", loopCount)
                 break
             }
             
             ; 检查游戏窗口是否仍然存在（Check if the game window still exists）
             if !WinExist("League of Legends (TM) Client") {
-                StatusText.Text := "错误：游戏窗口已关闭。`nError: The game window has been closed."
+                T_Status.Text := "错误：游戏窗口已关闭。`nError: The game window has been closed."
                 break
             }
             
@@ -743,7 +743,7 @@ StartAction(actionId, *) {
                 try {
                     Send(keyToSend) ; 核心（Core）
                 } catch Error as e {
-                    StatusText.Text := "错误：发送按键失败。`nError: Failed to send keys."
+                    T_Status.Text := "错误：发送按键失败。`nError: Failed to send keys."
                     back := true
                     break
                 }
@@ -754,10 +754,10 @@ StartAction(actionId, *) {
             
             ; 更新计数和界面（Update counter and UI status text）
             loopCount := A_Index
-            ProgressBar.Value := loopCount / maxLoops * 100
-            StatusText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
-            MonitorProgressBar.Value := loopCount / maxLoops * 100 ; 这部分是监视对话框的内容（This part is for monitor dialog box）
-            ProgressText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+            P_Progress.Value := loopCount / maxLoops * 100
+            T_Status.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+            P_Progress_Monitor.Value := loopCount / maxLoops * 100 ; 这部分是监视对话框的内容（This part is for monitor dialog box）
+            T_Progress_Monitor.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
             
             ; 短暂延迟，确保游戏能处理按键（Short lag to ensure the game handle frequent key press request）
             Sleep(interval)
@@ -777,9 +777,9 @@ StartAction(actionId, *) {
         try {
             Send(keyToHold)
         } catch Error as e {
-            StatusText.Text := "错误：按下控制键失败。`nError: Failed to press control keys."
+            T_Status.Text := "错误：按下控制键失败。`nError: Failed to press control keys."
             startBtn.Enabled := true
-            StopButton.Enabled := false
+            B_Stop.Enabled := false
             IsRunning := false
             return 3
         }
@@ -789,13 +789,13 @@ StartAction(actionId, *) {
         Loop maxLoops {
             ; 检查停止请求（Check stop request）
             if StopRequested {
-                StatusText.Text := Format("已停止！执行次数：{1:d}。`nStopped! Number of times: {1:d}.", loopCount)
+                T_Status.Text := Format("已停止！执行次数：{1:d}。`nStopped! Number of times: {1:d}.", loopCount)
                 break
             }
             
             ; 检查游戏窗口是否仍然存在（Check if the game window still exists）
             if !WinExist("League of Legends (TM) Client") {
-                StatusText.Text := "错误：游戏窗口已关闭。`nError: The game window has been closed."
+                T_Status.Text := "错误：游戏窗口已关闭。`nError: The game window has been closed."
                 break
             }
             
@@ -805,7 +805,7 @@ StartAction(actionId, *) {
                     try {
                         Send("{" key " Down}") ; 重新按下因未知原因被松开的按键（Re-press the key that has been released for unknown reason）
                     } catch Error as e {
-                        StatusText.Text := "错误：发送按键失败。`nError: Failed to send keys."
+                        T_Status.Text := "错误：发送按键失败。`nError: Failed to send keys."
                         return 3
                     }
                 }
@@ -815,16 +815,16 @@ StartAction(actionId, *) {
             try {
                 Send(keyToSend) ; 核心（Core）
             } catch Error as e {
-                StatusText.Text := "错误：发送按键失败。`nError: Failed to send keys."
+                T_Status.Text := "错误：发送按键失败。`nError: Failed to send keys."
                 break
             }
             
             ; 更新计数和界面（Update counter and UI status text）
             loopCount := A_Index
-            ProgressBar.Value := loopCount / maxLoops * 100
-            StatusText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
-            MonitorProgressBar.Value := loopCount / maxLoops * 100 ; 这部分是监视对话框的内容（This part is for monitor dialog box）
-            ProgressText.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+            P_Progress.Value := loopCount / maxLoops * 100
+            T_Status.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
+            P_Progress_Monitor.Value := loopCount / maxLoops * 100 ; 这部分是监视对话框的内容（This part is for monitor dialog box）
+            T_Progress_Monitor.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
             
             ; 短暂延迟，确保游戏能处理按键（Short lag to ensure the game handle frequent key press request）
             Sleep(interval)
@@ -836,7 +836,7 @@ StartAction(actionId, *) {
             Send(keyToRelease)
             ControlKeyReleased := true
         } catch Error as e {
-            StatusText.Text := "警告：松开控制键失败。`nWarning: Failed to release control keys."
+            T_Status.Text := "警告：松开控制键失败。`nWarning: Failed to release control keys."
         }
     }
     
@@ -849,14 +849,14 @@ StartAction(actionId, *) {
     ; WinActivate(MyGui.Hwnd) ; 将窗口激活到前台（Activate this window to make it front）
     
     if (loopCount = maxLoops && !StopRequested && (actionId == "sequence" || ControlKeyReleased)) {
-        StatusText.Text := Format("完成！执行次数：{1:d}。`nFinished! Number of times: {1:d}.", loopCount)
+        T_Status.Text := Format("完成！执行次数：{1:d}。`nFinished! Number of times: {1:d}.", loopCount)
         SoundPlay("*64") ; 播放系统提示音
     }
     
     ; 重置按钮状态（Reset button status）
     startBtn.Enabled := true
-    StopButton.Enabled := false
-    ProgressBar.Value := 0
+    B_Stop.Enabled := false
+    P_Progress.Value := 0
     
     return 0
 }
@@ -864,15 +864,15 @@ StartAction(actionId, *) {
 /**
  * 循环按下一个自定义单键。<br>Press a custom single key in a loop.
  */
-StartCustom(*) {
+A_StartCustom(*) {
     ; 首先检查单键输入是否合法（First check whether the single key input is valid）
-    inputKey := KeyEdit.Value
+    inputKey := E_SingleKey.Value
     if (StrLen(inputKey) = 0) {
-        StatusText.Text := "请输入一个有效的单键。`nPlease input a valid single key."
+        T_Status.Text := "请输入一个有效的单键。`nPlease input a valid single key."
         return 1
     }
     else If (not GetKeyVK(inputKey)) {
-        StatusText.Text := "无效单键。`nInvalid single key."
+        T_Status.Text := "无效单键。`nInvalid single key."
         return 1
     }
     
@@ -886,29 +886,29 @@ StartCustom(*) {
         controlKeys.Push("Alt")
     
     ActionConfigs["custom"]["ControlKeys"] := controlKeys
-    ActionConfigs["custom"]["Key"] := KeyEdit.Value
+    ActionConfigs["custom"]["Key"] := E_SingleKey.Value
     
-    StartAction("custom")
+    A_StartAction("custom")
 }
 
 ; 按住事件（Hold event）
 /**
  * 保持按住一个单键。<br>Keep a single key pressed.
  */
-HoldSingleAction(*) {
+A_HoldSingleKey(*) {
     if singleKeyToHold == ""
-        StatusText.Text := "尚未指定待按下的单键。`nSingle key to hold not specified yet."
+        T_Status.Text := "尚未指定待按下的单键。`nSingle key to hold not specified yet."
     else {
         if !WinExist("League of Legends (TM) Client") {
             MsgBox("未找到英雄联盟游戏进程。请确保您已启动一场对局。`nLeague of Legends.exe not found. Please make sure you've started a game.", "错误/Error", 0x10)
-            StatusText.Text := "错误：未找到游戏窗口。`nError: Game window not found."
+            T_Status.Text := "错误：未找到游戏窗口。`nError: Game window not found."
             return 1
         }
         try {
             WinActivate("League of Legends (TM) Client")
             Sleep(500) ; 等待窗口激活（Wait for the window to activate）
         } catch Error as e {
-            StatusText.Text := "错误：无法激活游戏窗口。`nError: Failed to activate the game window."
+            T_Status.Text := "错误：无法激活游戏窗口。`nError: Failed to activate the game window."
             return 2
         }
         else {
@@ -921,17 +921,17 @@ HoldSingleAction(*) {
 /**
  * 保持同时按住序列中的多个单键。<br>Keep multiple single keys in the sequence pressed.
  */
-HoldSequenceAction(*) {
+A_HoldSingleKeySequence(*) {
     if !WinExist("League of Legends (TM) Client") {
         MsgBox("未找到英雄联盟游戏进程。请确保您已启动一场对局。`nLeague of Legends.exe not found. Please make sure you've started a game.", "错误/Error", 0x10)
-        StatusText.Text := "错误：未找到游戏窗口。`nError: Game window not found."
+        T_Status.Text := "错误：未找到游戏窗口。`nError: Game window not found."
         return 1
     }
     try {
         WinActivate("League of Legends (TM) Client")
         Sleep(500) ; 等待窗口激活（Wait for the window to activate）
     } catch Error as e {
-        StatusText.Text := "错误：无法激活游戏窗口。`nError: Failed to activate the game window."
+        T_Status.Text := "错误：无法激活游戏窗口。`nError: Failed to activate the game window."
         return 2
     }
     else {
@@ -940,7 +940,7 @@ HoldSequenceAction(*) {
             try {
                 Send("{" keyStr " Down}")
             } catch Error as e {
-                StatusText.Text := "错误：发送按键失败。`nError: Failed to send keys."
+                T_Status.Text := "错误：发送按键失败。`nError: Failed to send keys."
                 break
             }
         }
@@ -951,11 +951,11 @@ HoldSequenceAction(*) {
 /**
  * 停止当前循环。<br>Cancel the current loop.
  */
-StopAction(*) {
+A_Stop(*) {
     global IsRunning, StopRequested
     if IsRunning {
         StopRequested := true
-        StatusText.Text := "已发送停止运行的请求。`nSent the stop request."
+        T_Status.Text := "已发送停止运行的请求。`nSent the stop request."
     }
 }
 
@@ -963,75 +963,75 @@ StopAction(*) {
 /**
  * 读取重复次数编辑框并更新重复次数。<br>Read repetition edit box and update repetition.
  */
-UpdateLoopCount(*) {
+A_Param_Repetition_UpdateValue(*) {
     global maxLoops
-    inputValue := LoopEdit.Value
+    inputValue := E_Repetition.Value
     
     ; 验证：确保输入是正整数（Ensure the input is a positive integer）
     if Integer(inputValue) > 0 {
         maxLoops := Integer(inputValue)
-        StatusText.Text := Format("重复次数已更新。`nThe number of repetitions has been updated.", inputValue)
-        UpdateRepetitionText(maxLoops)
+        T_Status.Text := Format("重复次数已更新。`nThe number of repetitions has been updated.", inputValue)
+        A_Param_Repetition_UpdateDisplay(maxLoops)
     }
     else 
-        StatusText.Text := "重复次数必须大于0。`nThe number of repetitions must be greater than 0."
+        T_Status.Text := "重复次数必须大于0。`nThe number of repetitions must be greater than 0."
 }
 
 /**
  * 更新重复次数的显示。<br>Update the display of repetition.
  * @param {Integer} maxLoops 要显示的重复次数。<br>The repetition to display.
  */
-UpdateRepetitionText(maxLoops) {
-    RepeatNumber_text.Text := Format("{1:d}次", maxLoops)
+A_Param_Repetition_UpdateDisplay(maxLoops) {
+    T_Repetition.Text := Format("{1:d}次", maxLoops)
 }
 
 /**
  * 重置重复次数。<br>Reset repetition.
  * @param {Integer} ranged 是否应用远程数值。<br>Whether to apply the ranged value.
  */
-ResetLoopCount(ranged) {
+A_Param_Repetition_ResetValue(ranged) {
     global maxLoops
     if ranged
         maxLoops := 1980
     else
         maxLoops := 1523
-    UpdateRepetitionText(maxLoops)
-    StatusText.Text := "重复次数已复位。`nThe number of repetitions has been reset."
+    A_Param_Repetition_UpdateDisplay(maxLoops)
+    T_Status.Text := "重复次数已复位。`nThe number of repetitions has been reset."
 }
 
 ; 更新命令执行间隔的函数（Update the command execution interval）
 /**
  * 读取命令执行间隔编辑框并更新命令执行间隔。<br>Read the command execution interval edit box and update command execution interval.
  */
-UpdateInterval(*) {
+A_Param_Interval_UpdateValue(*) {
     global interval
-    inputValue := IntervalEdit.Value
+    inputValue := E_Interval.Value
     
     if Integer(inputValue) >= 0 {
         interval := Integer(inputValue)
-        StatusText.Text := Format("命令执行间隔已更新。`nCommand execution interval has been updated.", inputValue)
-        UpdateIntervalText(interval)
+        T_Status.Text := Format("命令执行间隔已更新。`nCommand execution interval has been updated.", inputValue)
+        A_Param_Interval_UpdateDisplay(interval)
     }
     else 
-        StatusText.Text := "命令执行间隔必须大于等于0。`nCommand execution interval must be greater than 0."
+        T_Status.Text := "命令执行间隔必须大于等于0。`nCommand execution interval must be greater than 0."
 }
 
 /**
  * 更新命令执行间隔的显示。<br>Update the display of command execution interval.
  * @param {Integer} interval 要显示的命令执行间隔。单位为毫秒。<br>The command execution interval to display, in milliseconds.
  */
-UpdateIntervalText(interval) {
-    Interval_text.Text := Format("{1:d} ms", interval)
+A_Param_Interval_UpdateDisplay(interval) {
+    T_Interval.Text := Format("{1:d} ms", interval)
 }
 
 /**
  * 重置命令执行间隔。<br>Reset the command execution interval.
  */
-ResetInterval(*) {
+A_Param_Interval_ResetValue(*) {
     global interval
     interval := 0
-    UpdateIntervalText(interval)
-    StatusText.Text := "命令执行间隔已复位。`nCommand execution interval has been reset."
+    A_Param_Interval_UpdateDisplay(interval)
+    T_Status.Text := "命令执行间隔已复位。`nCommand execution interval has been reset."
 }
 
 ; 更新热键的函数（Functions to update hotkeys）
@@ -1058,161 +1058,161 @@ VerifyKeyValidity(keyStr) {
 /**
  * 读取中止热键编辑框并更新中止热键。<br>Read the abort hotkey edit box and update the stop key.
  */
-UpdateStopKey(*) {
-    global stopKey
-    inputValue := StopKeyEdit.Value
+A_Param_StopKey_UpdateValue(*) {
+    global K_Stop
+    inputValue := E_StopKey.Value
     
     if (StrLen(inputValue) = 0) {
-        StatusText.Text := "请输入一个中止热键。`nPlease input a stop hotkey."
+        T_Status.Text := "请输入一个中止热键。`nPlease input a stop hotkey."
     }
     else if VerifyKeyValidity(inputValue) {
-        Hotkey(stopKey, "Off") ; 在注册下一个热键之前，移除上一个热键（Before registering the next hotkey, remove the previous one）
-        stopKey := inputValue
-        UpdateStopKeyText(stopKey)
-        Hotkey(stopKey, StopAction, "On")
-        StatusText.Text := "中止热键已更新。`nThe stop hotkey has been updated."
+        Hotkey(K_Stop, "Off") ; 在注册下一个热键之前，移除上一个热键（Before registering the next hotkey, remove the previous one）
+        K_Stop := inputValue
+        A_Param_StopKey_UpdateDisplay(K_Stop)
+        Hotkey(K_Stop, A_Stop, "On")
+        T_Status.Text := "中止热键已更新。`nThe stop hotkey has been updated."
     }
     else 
-        StatusText.Text := "无效的中止热键。`nInvalid stop hotkey."
+        T_Status.Text := "无效的中止热键。`nInvalid stop hotkey."
 }
 
 /**
  * 更新中止热键的显示。<br>Update the display of abort hotkey.
- * @param stopKey 
+ * @param {String} stopKey 有效的中止热键字符串。<br>VALID abort hotkey string.
  */
-UpdateStopKeyText(stopKey) {
-    StopKey_text.Value := stopKey
+A_Param_StopKey_UpdateDisplay(stopKey) {
+    T_StopKey.Value := stopKey
 }
 
 /**
  * 重置中止热键。<br>Reset the abort hotkey.
  */
-ResetStopKey(*) {
-    global stopKey
-    Hotkey(stopKey, "Off")
-    stopKey := "#s"
-    UpdateStopKeyText(stopKey)
-    Hotkey(stopKey, StopAction, "On")
-    StatusText.Text := "中止热键已复位。`nThe stop hotkey has been reset."
+A_Param_StopKey_ResetValue(*) {
+    global K_Stop
+    Hotkey(K_Stop, "Off")
+    K_Stop := "#s"
+    A_Param_StopKey_UpdateDisplay(K_Stop)
+    Hotkey(K_Stop, A_Stop, "On")
+    T_Status.Text := "中止热键已复位。`nThe stop hotkey has been reset."
 }
 
 /**
  * 读取待按住的单键编辑框并更新待按住的单键。<br>Read the single-key-to-hold edit box and update the single key to hold.
  */
-UpdateSingleKeyToHold(*) {
+A_Param_SingleKeyToHold_UpdateValue(*) {
     global singleKeyToHold
-    inputValue := SingleKeyToHoldEdit.Value
+    inputValue := E_SingleKeyToHold.Value
     
     if (StrLen(inputValue) = 0) {
-        StatusText.Text := "请输入一个待按住的单键。`nPlease input a single key to hold."
+        T_Status.Text := "请输入一个待按住的单键。`nPlease input a single key to hold."
     }
     else if VerifyKeyValidity(inputValue) {
         singleKeyToHold := inputValue
-        UpdateSingleKeyToHoldText(singleKeyToHold)
-        StatusText.Text := "待按住的单键已更新。`nThe single key to hold has been updated."
+        A_Param_SingleKeyToHold_UpdateDisplay(singleKeyToHold)
+        T_Status.Text := "待按住的单键已更新。`nThe single key to hold has been updated."
     }
     else 
-        StatusText.Text := "无效的待按住的单键。`nInvalid single key to hold."
+        T_Status.Text := "无效的待按住的单键。`nInvalid single key to hold."
 }
 
 /**
  * 更新待按住的单键的显示。<br>Update the display of single key to hold.
- * @param singleKeyToHold 
+ * @param {String} singleKeyToHold 有效的待按住的单键。<br>VALID single key to hold.
  */
-UpdateSingleKeyToHoldText(singleKeyToHold) {
-    SingleKeyToHold_text.Value := singleKeyToHold
+A_Param_SingleKeyToHold_UpdateDisplay(singleKeyToHold) {
+    T_SingleKeyToHold.Value := singleKeyToHold
 }
 
 /**
  * 重置待按住的单键。<br>Reset the single key to hold.
  */
-ResetSingleKeyToHold(*) {
+A_Param_SingleKeyToHold_ResetValue(*) {
     global singleKeyToHold
     singleKeyToHold := ""
-    UpdateSingleKeyToHoldText(singleKeyToHold)
-    StatusText.Text := "待按住的单键已复位。`nThe single key to hold has been reset."
+    A_Param_SingleKeyToHold_UpdateDisplay(singleKeyToHold)
+    T_Status.Text := "待按住的单键已复位。`nThe single key to hold has been reset."
 }
 
 /**
  * 读取按住单键热键编辑框并更新按住单键热键。<br>Read the single-key hold hotkey edit box and update the single-key hold key.
  */
-UpdateHoldSingleKey(*) {
-    global holdSingleKey
-    inputValue := HoldSingleKeyEdit.Value
+A_Param_HoldSingleKey_UpdateValue(*) {
+    global K_HoldSingleKey
+    inputValue := E_HoldSingleKey.Value
     
     if (StrLen(inputValue) = 0) {
-        StatusText.Text := "请输入一个按住单键热键。`nPlease input a single-key hold hotkey."
+        T_Status.Text := "请输入一个按住单键热键。`nPlease input a single-key hold hotkey."
     }
     else if VerifyKeyValidity(inputValue) {
-        Hotkey(holdSingleKey, "Off")
-        holdSingleKey := inputValue
-        UpdateHoldSingleKeyText(holdSingleKey)
-        Hotkey(holdSingleKey, HoldSingleAction, "On")
-        StatusText.Text := "按住单键热键已更新。`nThe single-key hold hotkey has been updated."
+        Hotkey(K_HoldSingleKey, "Off")
+        K_HoldSingleKey := inputValue
+        A_Param_HoldSingleKey_UpdateDisplay(K_HoldSingleKey)
+        Hotkey(K_HoldSingleKey, A_HoldSingleKey, "On")
+        T_Status.Text := "按住单键热键已更新。`nThe single-key hold hotkey has been updated."
     }
     else 
-        StatusText.Text := "无效的按住单键热键。`nInvalid single-key hold hotkey."
+        T_Status.Text := "无效的按住单键热键。`nInvalid single-key hold hotkey."
 }
 
 /**
  * 更新按住单键热键的显示。<br>Update the display of single-key hold hotkey.
- * @param holdSingleKey 
+ * @param {String} holdSingleKey 有效的按住单键的热键字符串。<br>VALID string of the hotkey to hold the single key.
  */
-UpdateHoldSingleKeyText(holdSingleKey) {
-    HoldSingleKey_text.Value := holdSingleKey
+A_Param_HoldSingleKey_UpdateDisplay(holdSingleKey) {
+    T_HoldSingleKey.Value := holdSingleKey
 }
 
 /**
  * 重置按住单键热键。<br>Reset the single-key hold hotkey.
  */
-ResetHoldSingleKey(*) {
-    global holdSingleKey
-    Hotkey(holdSingleKey, "Off")
-    holdSingleKey := "!h"
-    UpdateHoldSingleKeyText(holdSingleKey)
-    Hotkey(holdSingleKey, HoldSingleAction, "On")
-    StatusText.Text := "按住单键热键已复位。`nThe single-key hold hotkey has been reset."
+A_Param_HoldSingleKey_ResetValue(*) {
+    global K_HoldSingleKey
+    Hotkey(K_HoldSingleKey, "Off")
+    K_HoldSingleKey := "!h"
+    A_Param_HoldSingleKey_UpdateDisplay(K_HoldSingleKey)
+    Hotkey(K_HoldSingleKey, A_HoldSingleKey, "On")
+    T_Status.Text := "按住单键热键已复位。`nThe single-key hold hotkey has been reset."
 }
 
 /**
  * 读取按住序列热键编辑框并更新按住序列热键。<br>Read the sequence-key hold hotkey edit box and update the sequence-key hold key.
  */
-UpdateHoldSequenceKey(*) {
-    global holdSequenceKey
-    inputValue := HoldSequenceKeyEdit.Value
+A_Param_HoldSingleKeySequence_UpdateValue(*) {
+    global K_HoldSingleKeySequence
+    inputValue := E_HoldSequenceKey.Value
     
     if (StrLen(inputValue) = 0) {
-        StatusText.Text := "请输入一个按住序列热键。`nPlease input a sequence-key hold hotkey."
+        T_Status.Text := "请输入一个按住序列热键。`nPlease input a sequence-key hold hotkey."
     }
     else if VerifyKeyValidity(inputValue) {
-        Hotkey(holdSequenceKey, "Off")
-        holdSequenceKey := inputValue
-        UpdateHoldSequenceKeyText(holdSequenceKey)
-        Hotkey(holdSequenceKey, HoldSequenceAction, "On")
-        StatusText.Text := "按住序列热键已更新。`nThe sequence-key hold hotkey has been updated."
+        Hotkey(K_HoldSingleKeySequence, "Off")
+        K_HoldSingleKeySequence := inputValue
+        A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence)
+        Hotkey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
+        T_Status.Text := "按住序列热键已更新。`nThe sequence-key hold hotkey has been updated."
     }
     else 
-        StatusText.Text := "无效的按住序列热键。`nInvalid sequence-key hold hotkey."
+        T_Status.Text := "无效的按住序列热键。`nInvalid sequence-key hold hotkey."
 }
 
 /**
  * 更新按住序列热键的显示。<br>Update the display of sequence-key hold hotkey.
- * @param holdSequenceKey 
+ * @param {String} K_HoldSingleKeySequence 有效的按住单键序列的热键字符串。<br>VALID string of the hotkey to hold the single key sequence.
  */
-UpdateHoldSequenceKeyText(holdSequenceKey) {
-    HoldSequenceKey_text.Value := holdSequenceKey
+A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence) {
+    T_HoldSequenceKey.Value := K_HoldSingleKeySequence
 }
 
 /**
  * 重置按住序列热键。<br>Reset the sequence-key hold hotkey.
  */
-ResetHoldSequenceKey(*) {
-    global holdSequenceKey
-    Hotkey(holdSequenceKey, "Off")
-    holdSequenceKey := "^h"
-    UpdateHoldSequenceKeyText(holdSequenceKey)
-    Hotkey(holdSequenceKey, HoldSequenceAction, "On")
-    StatusText.Text := "按住序列热键已复位。`nThe sequence-key hold hotkey has been reset."
+A_Param_HoldSingleKeySequence_ResetValue(*) {
+    global K_HoldSingleKeySequence
+    Hotkey(K_HoldSingleKeySequence, "Off")
+    K_HoldSingleKeySequence := "^h"
+    A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence)
+    Hotkey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
+    T_Status.Text := "按住序列热键已复位。`nThe sequence-key hold hotkey has been reset."
 }
 
 ; 重置所有参数（Reset all parameters）
@@ -1221,54 +1221,54 @@ ResetHoldSequenceKey(*) {
  * 
  * 对于重复次数，重置为远程默认数值。<br>As for repetition, it's reset as the default ranged value.
  */
-ResetAllParameters(*) {
-    ResetLoopCount(true)
-    ResetInterval()
-    ResetStopKey()
-    ResetSingleKeyToHold()
-    ResetHoldSingleKey()
-    ResetHoldSequenceKey()
-    StatusText.Text := "所有参数已复位。`nAll parameters have been reset."
+A_Param_All_Reset(*) {
+    A_Param_Repetition_ResetValue(true)
+    A_Param_Interval_ResetValue()
+    A_Param_StopKey_ResetValue()
+    A_Param_SingleKeyToHold_ResetValue()
+    A_Param_HoldSingleKey_ResetValue()
+    A_Param_HoldSingleKeySequence_ResetValue()
+    T_Status.Text := "所有参数已复位。`nAll parameters have been reset."
 }
 
 ; 按键序列操作（Key sequence operations）
 /**
  * 决定“按住序列”按钮的可用性。<br>Determine the availability of the "Hold Sequence" button.
  */
-ToggleHoldSequenceAvailability(*) {
+A_ToggleButtonAvailability_HoldSingleKeySequence(*) {
     if keySeq.Length > 0 {
         for index, array in keySeq {
             keyStr := array[2]
             if RegExMatch(keyStr, "Ctrl|Shift|Alt") {
-                HoldSequenceButton.Enabled := false
+                B_HoldSequence.Enabled := false
                 return
             }
         }
-        HoldSequenceButton.Enabled := true
+        B_HoldSequence.Enabled := true
     }
     else
-        HoldSequenceButton.Enabled := false
+        B_HoldSequence.Enabled := false
 }
 
 /**
  * 决定“运行序列”按钮的可用性。<br>Determine the availability of the "Run Sequence" button.
  */
-ToggleRunSequenceAvailability(*) {
-    RunSequenceButton.Enabled := keySeq.Length > 0
+A_ToggleButtonAvailability_RunSequence(*) {
+    B_RunSequence.Enabled := keySeq.Length > 0
 }
 
 /**
  * 读取自定义部分的按键组合并压入按键序列栈。<br>Read the key combination in custom part and push it into the key sequence stack.
  */
-PushSequence(*) {
+A_KeySequence_Push(*) {
     ; 校验单键（Verify the single key）
-    inputKey := KeyEdit.Value
+    inputKey := E_SingleKey.Value
     if (StrLen(inputKey) = 0) {
-        StatusText.Text := "请输入一个有效的单键。`nPlease input a valid single key."
+        T_Status.Text := "请输入一个有效的单键。`nPlease input a valid single key."
         return 1
     }
     else If (not GetKeyVK(inputKey)) {
-        StatusText.Text := "无效单键。`nInvalid single key."
+        T_Status.Text := "无效单键。`nInvalid single key."
         return 1
     }
     ; 构建按键代码和按键字符串（Construct key code and key string）
@@ -1289,36 +1289,36 @@ PushSequence(*) {
     ; 修改数据结构（Edit data structure）
     keySeq.Push([seqCode, seqStr, interval])
     ; 展示结果（Display the result）
-    SequenceList.Add("", keySeq.Length, seqStr, interval)
-    SequenceList.ModifyCol(2, "AutoHdr")
-    SequenceList.ModifyCol(3, "AutoHdr")
+    L_KeySequence.Add("", keySeq.Length, seqStr, interval)
+    L_KeySequence.ModifyCol(2, "AutoHdr")
+    L_KeySequence.ModifyCol(3, "AutoHdr")
     ; 更新按钮的可用性（Update button availability）
-    ToggleHoldSequenceAvailability()
-    ToggleRunSequenceAvailability()
+    A_ToggleButtonAvailability_HoldSingleKeySequence()
+    A_ToggleButtonAvailability_RunSequence()
 }
 
 /**
  * 从按键序列栈中清除最近压入的一个按键组合。<br>Clear the recently pushed key combination from the key sequence stack.
  */
-PopSequence(*) {
+A_KeySequence_Pop(*) {
     if keySeq.Length > 0 {
-        SequenceList.Delete(keySeq.Length)
-        SequenceList.ModifyCol(2, "AutoHdr")
-        SequenceList.ModifyCol(3, "AutoHdr")
+        L_KeySequence.Delete(keySeq.Length)
+        L_KeySequence.ModifyCol(2, "AutoHdr")
+        L_KeySequence.ModifyCol(3, "AutoHdr")
         keySeq.Pop()
-        ToggleHoldSequenceAvailability()
-        ToggleRunSequenceAvailability()
+        A_ToggleButtonAvailability_HoldSingleKeySequence()
+        A_ToggleButtonAvailability_RunSequence()
     }
 }
 
 /**
  * 清除按键序列栈中的所有按键组合。<br>Clear all key combinations in the key sequence stack.
  */
-ClearSequence(*) {
+A_KeySequence_Clear(*) {
     keySeq.Length := 0
-    SequenceList.Delete()
-    SequenceList.ModifyCol(2, "AutoHdr")
-    SequenceList.ModifyCol(3, "AutoHdr")
-    ToggleHoldSequenceAvailability()
-    ToggleRunSequenceAvailability()
+    L_KeySequence.Delete()
+    L_KeySequence.ModifyCol(2, "AutoHdr")
+    L_KeySequence.ModifyCol(3, "AutoHdr")
+    A_ToggleButtonAvailability_HoldSingleKeySequence()
+    A_ToggleButtonAvailability_RunSequence()
 }
