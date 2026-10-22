@@ -21,11 +21,7 @@ maxLoops := 1980 ; 重复次数（Repetition times）
 interval := 0 ; 命令执行间隔（Command execution interval）
 K_Stop := "#s" ; 停止热键（Stop hotkey）
 singleKeyToHold := "" ; 待按住的单键（Single key to hold）
-K_HoldSingleKey := "!h" ; 按住单键热键（Single-key hold hotkey）
-K_HoldSingleKeySequence := "^h" ; 按住单键序列热键（Single-key sequence hold hotkey）
 Hotkey(K_Stop, A_Stop, "On")
-HotKey(K_HoldSingleKey, A_HoldSingleKey, "On")
-HotKey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
 keySeq := [] ; 按键序列。每个元素是一个数组；每个数组的第一个元素是按键代码，第二个元素是按键的字符串表示，第三个元素是按下这个按键后经历多少延迟（Key sequence. Each element is an array; the first element of each array is key code, the second element is the string representation of the key to press, and the third element is how much time to wait after this key is pressed）
 IsRunning := false ; 标记是否在执行某个功能（Mark whether a function is being performed）
 StopRequested := false ; 标记用户是否请求中止（Mark whether the user has requested to abort）
@@ -206,7 +202,7 @@ Config_default := {
     Regions: {
         Left:   {Width: 500, Height: 950},
         Middle: {Width: 400, Height: 950},
-        Right:  {Width: 800, Height: 950},
+        Right:  {Width: 750, Height: 950},
     },
     
     ; 每个区域内的控件规格（Control speculation in each area）
@@ -256,40 +252,30 @@ Config_default := {
         ;                                类型           横坐标   纵坐标                                                                               宽度                高度            选项         文本
         ;                                Type           X       Y                                                                                   Width               Height          Options     Text
         Title:                          ["Text",        0,      PadY,                                                                               750,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.Title],
-        RepetitionLabel:                ["Text",        0,      PadY * 2 + H_TEXT_2L + 5,                                                           220,                H_TEXT_1L,      "",         Stringtable.Right.Config.RepetitionPrompt],
-        RepetitionEdit:                 ["Edit",        220,    PadY * 2 + H_TEXT_2L,                                                               80,                 H_EDIT_1L,      "Number",   maxLoops], ; Number属性限制数字输入（"Number" restricts the input type）
-        UpdateRepetitionButton:         ["Button",      310,    PadY * 2 + H_TEXT_2L,                                                               120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        RepetitionValue:                ["Text",        440,    PadY * 2 + H_TEXT_2L + 5,                                                           90,                 H_TEXT_1L,      "",         ""],
-        MeleeResetRepetitionButton:     ["Button",      530,    PadY * 2 + H_TEXT_2L - 10,                                                          120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.MeleeResetButton],
-        RangedResetRepetitionButton:    ["Button",      660,    PadY * 2 + H_TEXT_2L - 10,                                                          120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.RangedResetButton],
-        IntervalLabel:                  ["Text",        0,      PadY * 3 + H_TEXT_2L + H_BUTTON_2L + 5,                                             220,                H_TEXT_1L,      "",         Stringtable.Right.Config.IntervalPrompt],
-        IntervalEdit:                   ["Edit",        220,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 80,                 H_EDIT_1L,      "Number",   interval],
-        UpdateIntervalButton:           ["Button",      310,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        IntervalValue:                  ["Text",        440,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L + 5,                                             90,                 H_TEXT_1L,      "",         ""],
-        ResetIntervalButton:            ["Button",      530,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        AbortHotkeyLabel:               ["Text",        0,      PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L + 5,                               220,                H_TEXT_1L,      "",         Stringtable.Right.Config.AbortHotkeyPrompt],
-        AbortHotkeyEdit:                ["Edit",        220,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   80,                 H_EDIT_1L,      "",         K_Stop],
-        UpdateAbortHotkeyButton:        ["Button",      310,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        AbortHotkeyValue:               ["Text",        440,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L + 5,                               90,                 H_TEXT_1L,      "",         ""],
-        ResetAbortHotkeyButton:         ["Button",      530,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        SingleKeyToHoldLabel:           ["Text",        0,      PadY * 5 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                           220,                H_TEXT_2L,      "",         Stringtable.Right.Config.SingleKeyToHoldPrompt],
-        SingleKeyToHoldEdit:            ["Edit",        220,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        80,                 H_EDIT_1L,      "",         singleKeyToHold],
-        UpdateSingleKeyToHoldButton:    ["Button",      310,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        SingleKeyToHoldValue:           ["Text",        440,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                    90,                 H_TEXT_1L,      "",         ""],
-        ResetSingleKeyToHoldButton:     ["Button",      530,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        HoldSingleHotkeyLabel:          ["Text",        0,      PadY * 6 + H_TEXT_2L * 2 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                       220,                H_TEXT_2L,      "",         Stringtable.Right.Config.HoldSingleKeyHotkeyPrompt],
-        HoldSingleHotkeyEdit:           ["Edit",        220,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        80,                 H_EDIT_1L,      "",         K_HoldSingleKey],
-        UpdateHoldSingleHotkeyButton:   ["Button",      310,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        HoldSingleHotkeyValue:          ["Text",        440,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                    90,                 H_TEXT_1L,      "",         ""],
-        ResetHoldSingleHotkeyButton:    ["Button",      530,    PadY * 6 + H_TEXT_2L * 2.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        HoldSequenceHotkeyLabel:        ["Text",        0,      PadY * 7 + H_TEXT_2L * 3 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                       220,                H_TEXT_2L,      "",         Stringtable.Right.Config.HoldSequenceHotkeyPrompt],
-        HoldSequenceHotkeyEdit:         ["Edit",        220,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        80,                 H_EDIT_1L,      "",         K_HoldSingleKeySequence],
-        UpdateHoldSequenceHotkeyButton: ["Button",      310,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        HoldSequenceHotkeyValue:        ["Text",        440,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                    90,                 H_TEXT_1L,      "",         ""],
-        ResetHoldSequenceHotkeyButton:  ["Button",      530,    PadY * 7 + H_TEXT_2L * 3.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        ResetAllParameterButton:        ["Button",      310,    PadY * 8 + H_TEXT_2L * 4 + H_BUTTON_2L + H_BUTTON_1L * 2,                           180,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.ResetAllButton],
-        Separator:                      ["Text",        0,      PadY * 9 + H_TEXT_2L * 4 + H_BUTTON_2L * 2 + H_BUTTON_1L * 2,                       800,                H_HSEPARATOR,   "0x10",     ""],
-        AbortHotkeyHelpDoc:             ["Text",        0,      PadY * 10 + H_TEXT_2L * 4 + H_BUTTON_2L * 2 + H_BUTTON_1L * 2 + H_HSEPARATOR,       800,                H_TEXT_15L,     "",         Stringtable.Right.HelpDoc],
+        RepetitionLabel:                ["Text",        0,      PadY * 2 + H_TEXT_2L + 5,                                                           200,                H_TEXT_1L,      "",         Stringtable.Right.Config.RepetitionPrompt],
+        RepetitionEdit:                 ["Edit",        200,    PadY * 2 + H_TEXT_2L,                                                               80,                 H_EDIT_1L,      "Number",   maxLoops], ; Number属性限制数字输入（"Number" restricts the input type）
+        UpdateRepetitionButton:         ["Button",      290,    PadY * 2 + H_TEXT_2L,                                                               120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        RepetitionValue:                ["Text",        420,    PadY * 2 + H_TEXT_2L + 5,                                                           90,                 H_TEXT_1L,      "",         ""],
+        MeleeResetRepetitionButton:     ["Button",      510,    PadY * 2 + H_TEXT_2L - 10,                                                          120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.MeleeResetButton],
+        RangedResetRepetitionButton:    ["Button",      640,    PadY * 2 + H_TEXT_2L - 10,                                                          120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.RangedResetButton],
+        IntervalLabel:                  ["Text",        0,      PadY * 3 + H_TEXT_2L + H_BUTTON_2L + 5,                                             200,                H_TEXT_1L,      "",         Stringtable.Right.Config.IntervalPrompt],
+        IntervalEdit:                   ["Edit",        200,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 80,                 H_EDIT_1L,      "Number",   interval],
+        UpdateIntervalButton:           ["Button",      290,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        IntervalValue:                  ["Text",        420,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L + 5,                                             90,                 H_TEXT_1L,      "",         ""],
+        ResetIntervalButton:            ["Button",      510,    PadY * 3 + H_TEXT_2L + H_BUTTON_2L,                                                 120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        AbortHotkeyLabel:               ["Text",        0,      PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L + 5,                               200,                H_TEXT_1L,      "",         Stringtable.Right.Config.AbortHotkeyPrompt],
+        AbortHotkeyEdit:                ["Edit",        200,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   80,                 H_EDIT_1L,      "",         K_Stop],
+        UpdateAbortHotkeyButton:        ["Button",      290,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        AbortHotkeyValue:               ["Text",        420,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L + 5,                               90,                 H_TEXT_1L,      "",         ""],
+        ResetAbortHotkeyButton:         ["Button",      510,    PadY * 4 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L,                                   120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        SingleKeyToHoldLabel:           ["Text",        0,      PadY * 5 + H_TEXT_2L + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                           200,                H_TEXT_2L,      "",         Stringtable.Right.Config.SingleKeyToHoldPrompt],
+        SingleKeyToHoldEdit:            ["Edit",        200,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        80,                 H_EDIT_1L,      "",         singleKeyToHold],
+        UpdateSingleKeyToHoldButton:    ["Button",      290,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        SingleKeyToHoldValue:           ["Text",        420,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2 + 5,                    90,                 H_TEXT_1L,      "",         ""],
+        ResetSingleKeyToHoldButton:     ["Button",      510,    PadY * 5 + H_TEXT_2L * 1.25 + H_BUTTON_2L + H_BUTTON_1L * 2,                        120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        ResetAllParameterButton:        ["Button",      285,    PadY * 6 + H_TEXT_2L * 2 + H_BUTTON_2L + H_BUTTON_1L * 2,                           180,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.ResetAllButton],
+        Separator:                      ["Text",        0,      PadY * 7 + H_TEXT_2L * 2 + H_BUTTON_2L * 2 + H_BUTTON_1L * 2,                       800,                H_HSEPARATOR,   "0x10",     ""],
+        AbortHotkeyHelpDoc:             ["Text",        0,      PadY * 8 + H_TEXT_2L * 2 + H_BUTTON_2L * 2 + H_BUTTON_1L * 2 + H_HSEPARATOR,        800,                H_TEXT_15L,     "",         Stringtable.Right.HelpDoc],
     }
 }
 ;; 控件添加层（Control addition layer）
@@ -414,7 +400,7 @@ RebuildUI() {
  * 构建主界面。<br>Create the main GUI.
  */
 CreateMainGui() {
-    global MyGui, SettingsMenu, ActionConfigs, B_HoldSequence, B_RunSequence, B_Stop, T_Status, P_Progress, E_SingleKey, CheckBox1, CheckBox2, CheckBox3, L_KeySequence, E_Repetition, T_Repetition, E_Interval, T_Interval, E_StopKey, T_StopKey, E_SingleKeyToHold, E_HoldSingleKey, T_SingleKeyToHold, T_HoldSingleKey, E_HoldSequenceKey, T_HoldSequenceKey
+    global MyGui, SettingsMenu, ActionConfigs, B_HoldSequence, B_RunSequence, B_Stop, T_Status, P_Progress, E_SingleKey, CheckBox1, CheckBox2, CheckBox3, L_KeySequence, E_Repetition, T_Repetition, E_Interval, T_Interval, E_StopKey, T_StopKey, E_SingleKeyToHold, T_SingleKeyToHold
     ; 下面设置图形化界面（Set the graphical user interface）    
     MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
     ;; 标题（Title）
@@ -519,18 +505,6 @@ CreateMainGui() {
     B_SingleKeyToHold_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateSingleKeyToHoldButton)
     T_SingleKeyToHold := AddCtrl(MyGui, 5, Config_default.Right_Controls.SingleKeyToHoldValue)
     B_SingleKeyToHold_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetSingleKeyToHoldButton)
-    ;;; 按住单键热键（Single-key hold hotkey）
-    AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyLabel)
-    E_HoldSingleKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyEdit)
-    B_HoldSingleKey_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldSingleHotkeyButton)
-    T_HoldSingleKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSingleHotkeyValue)
-    B_HoldSingleKey_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldSingleHotkeyButton)
-    ;;; 按住单键序列热键（Single-key sequence hold hotkey）
-    AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyLabel)
-    E_HoldSequenceKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyEdit)
-    B_HoldSequenceKey_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldSequenceHotkeyButton)
-    T_HoldSequenceKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldSequenceHotkeyValue)
-    B_HoldSequenceKey_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldSequenceHotkeyButton)
     ;;; 全参数复位按钮（Button to reset all parameters）
     B_All_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAllParameterButton)
     ;; 右侧第一分隔线（First separator of the left part）
@@ -620,12 +594,6 @@ CreateMainGui() {
     ;;; 待按住的单键（Single key to hold）
     B_SingleKeyToHold_Update.OnEvent("Click", A_Param_SingleKeyToHold_UpdateValue)
     B_SingleKeyToHold_Reset.OnEvent("Click", A_Param_SingleKeyToHold_ResetValue)
-    ;;; 按住单键热键（Single-key hold hotkey）
-    B_HoldSingleKey_Update.OnEvent("Click", A_Param_HoldSingleKey_UpdateValue)
-    B_HoldSingleKey_Reset.OnEvent("Click", A_Param_HoldSingleKey_ResetValue)
-    ;;; 按住单键序列热键（Single-key sequence hold hotkey）
-    B_HoldSequenceKey_Update.OnEvent("Click", A_Param_HoldSingleKeySequence_UpdateValue)
-    B_HoldSequenceKey_Reset.OnEvent("Click", A_Param_HoldSingleKeySequence_ResetValue)
     ;;; 全部复位（Reset all）
     B_All_Reset.OnEvent("Click", A_Param_All_Reset)
     ;; 设置窗口关闭和Esc键事件（Set windows close event）
@@ -636,8 +604,6 @@ CreateMainGui() {
     A_Param_Repetition_UpdateDisplay(maxLoops)
     A_Param_Interval_UpdateDisplay(interval)
     A_Param_StopKey_UpdateDisplay(K_Stop)
-    A_Param_HoldSingleKey_UpdateDisplay(K_HoldSingleKey)
-    A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence)
     SetTitleMatchMode(3) ; 设置窗口名称精确匹配（Set the window to be matched the exact name）
 }
 
@@ -1133,88 +1099,6 @@ A_Param_SingleKeyToHold_ResetValue(*) {
     T_Status.Text := "待按住的单键已复位。`nThe single key to hold has been reset."
 }
 
-/**
- * 读取按住单键热键编辑框并更新按住单键热键。<br>Read the single-key hold hotkey edit box and update the single-key hold key.
- */
-A_Param_HoldSingleKey_UpdateValue(*) {
-    global K_HoldSingleKey
-    inputValue := E_HoldSingleKey.Value
-    
-    if (StrLen(inputValue) = 0) {
-        T_Status.Text := "请输入一个按住单键热键。`nPlease input a single-key hold hotkey."
-    }
-    else if VerifyKeyValidity(inputValue) {
-        Hotkey(K_HoldSingleKey, "Off")
-        K_HoldSingleKey := inputValue
-        A_Param_HoldSingleKey_UpdateDisplay(K_HoldSingleKey)
-        Hotkey(K_HoldSingleKey, A_HoldSingleKey, "On")
-        T_Status.Text := "按住单键热键已更新。`nThe single-key hold hotkey has been updated."
-    }
-    else 
-        T_Status.Text := "无效的按住单键热键。`nInvalid single-key hold hotkey."
-}
-
-/**
- * 更新按住单键热键的显示。<br>Update the display of single-key hold hotkey.
- * @param {String} holdSingleKey 有效的按住单键的热键字符串。<br>VALID string of the hotkey to hold the single key.
- */
-A_Param_HoldSingleKey_UpdateDisplay(holdSingleKey) {
-    T_HoldSingleKey.Value := holdSingleKey
-}
-
-/**
- * 重置按住单键热键。<br>Reset the single-key hold hotkey.
- */
-A_Param_HoldSingleKey_ResetValue(*) {
-    global K_HoldSingleKey
-    Hotkey(K_HoldSingleKey, "Off")
-    K_HoldSingleKey := "!h"
-    A_Param_HoldSingleKey_UpdateDisplay(K_HoldSingleKey)
-    Hotkey(K_HoldSingleKey, A_HoldSingleKey, "On")
-    T_Status.Text := "按住单键热键已复位。`nThe single-key hold hotkey has been reset."
-}
-
-/**
- * 读取按住单键序列热键编辑框并更新按住单键序列热键。<br>Read the single-key sequence hold hotkey edit box and update the single-key sequence hold hotkey.
- */
-A_Param_HoldSingleKeySequence_UpdateValue(*) {
-    global K_HoldSingleKeySequence
-    inputValue := E_HoldSequenceKey.Value
-    
-    if (StrLen(inputValue) = 0) {
-        T_Status.Text := "请输入一个按住单键序列热键。`nPlease input a single-key sequence hold hotkey."
-    }
-    else if VerifyKeyValidity(inputValue) {
-        Hotkey(K_HoldSingleKeySequence, "Off")
-        K_HoldSingleKeySequence := inputValue
-        A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence)
-        Hotkey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
-        T_Status.Text := "按住单键序列热键已更新。`nThe single-key sequence hold hotkey has been updated."
-    }
-    else 
-        T_Status.Text := "无效的按住单键序列热键。`nInvalid single-key sequence hold hotkey."
-}
-
-/**
- * 更新按住单键序列热键的显示。<br>Update the display of the single-key sequence hold hotkey.
- * @param {String} K_HoldSingleKeySequence 有效的按住单键序列的热键字符串。<br>VALID string of the hotkey to hold the single key sequence.
- */
-A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence) {
-    T_HoldSequenceKey.Value := K_HoldSingleKeySequence
-}
-
-/**
- * 重置按住单键序列热键。<br>Reset the single-key sequence hold hotkey.
- */
-A_Param_HoldSingleKeySequence_ResetValue(*) {
-    global K_HoldSingleKeySequence
-    Hotkey(K_HoldSingleKeySequence, "Off")
-    K_HoldSingleKeySequence := "^h"
-    A_Param_HoldSingleKeySequence_UpdateDisplay(K_HoldSingleKeySequence)
-    Hotkey(K_HoldSingleKeySequence, A_HoldSingleKeySequence, "On")
-    T_Status.Text := "按住单键序列热键已复位。`nThe single-key sequence hold hotkey has been reset."
-}
-
 ; 重置所有参数（Reset all parameters）
 /**
  * 重置所有参数。<br>Reset all parameters.
@@ -1226,8 +1110,6 @@ A_Param_All_Reset(*) {
     A_Param_Interval_ResetValue()
     A_Param_StopKey_ResetValue()
     A_Param_SingleKeyToHold_ResetValue()
-    A_Param_HoldSingleKey_ResetValue()
-    A_Param_HoldSingleKeySequence_ResetValue()
     T_Status.Text := "所有参数已复位。`nAll parameters have been reset."
 }
 
