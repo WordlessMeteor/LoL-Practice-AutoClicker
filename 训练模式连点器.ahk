@@ -18,9 +18,11 @@ MsgBox "本脚本依赖于AutoHotKey v2.0。`nThis program relies on AutoHotKey 
 
 ; 初始化全局变量（Initialize global variables）
 maxLoops := 1980 ; 重复次数（Repetition times）
-interval := 0 ; 命令执行间隔（Command execution interval）
+executionInterval := 0 ; 命令执行间隔（Command execution interval）
 K_Stop := "#s" ; 停止热键（Stop hotkey）
 singleKeyToHold := "" ; 待按住的单键（Single key to hold）
+holdDetectInterval := 250 ; 按住检测间隔（Hold detection interval）
+holdCooldown := 0 ; 长按冷却时间（Hold cooldown）
 Hotkey(K_Stop, A_Stop, "On")
 keySeq := [] ; 按键序列。每个元素是一个数组；每个数组的第一个元素是按键代码，第二个元素是按键的字符串表示，第三个元素是按下这个按键后经历多少延迟（Key sequence. Each element is an array; the first element of each array is key code, the second element is the string representation of the key to press, and the third element is how much time to wait after this key is pressed）
 IsRunning := false ; 标记是否在执行某个功能（Mark whether a function is being performed）
@@ -89,11 +91,11 @@ MeasurePadding(fontOptions, fontName) {
  * @param {String} fontName 字体内置名。<br>Font internal name.
  */
 MeasureAllHeight(fontOptions, fontName) {
-    global H_TEXT_1L, H_TEXT_2L, H_TEXT_3L, H_TEXT_15L, H_HSEPARATOR, H_BUTTON_1L, H_BUTTON_2L, H_CHECKBOX_1L, H_EDIT_1L, H_PROGRESS, H_LISTVIEW
+    global H_TEXT_1L, H_TEXT_2L, H_TEXT_3L, H_TEXT_17L, H_HSEPARATOR, H_BUTTON_1L, H_BUTTON_2L, H_CHECKBOX_1L, H_EDIT_1L, H_PROGRESS, H_LISTVIEW
     H_TEXT_1L := MeasureHeight(fontOptions, fontName, ["Text", "", ""]) ; 含有一行文本的文本框高度（Height of a text box with 1 line of text）
     H_TEXT_2L := MeasureHeight(fontOptions, fontName, ["Text", "", "`n"]) ; 含有两行文本的文本框高度（Height of a text box with 2 lines of text）
     H_TEXT_3L := MeasureHeight(fontOptions, fontName, ["Text", "", "`n`n"]) ; 含有三行文本的文本框高度（Height of a text box with 3 lines of text）
-    H_TEXT_15L := MeasureHeight(fontOptions, fontName, ["Text", "", StrReplace(Format("{1:+014}", 0), "0", "`n")]) ; 含有15行文本的文本框高度（Height of a text box with 15 lines of text）
+    H_TEXT_17L := MeasureHeight(fontOptions, fontName, ["Text", "", StrReplace(Format("{1:+016}", 0), "0", "`n")]) ; 含有15行文本的文本框高度（Height of a text box with 15 lines of text）
     H_HSEPARATOR := MeasureHeight(fontOptions, fontName, ["Text", "0x10", ""]) ; 水平分隔符高度（Height of a horizontal separator）
     H_BUTTON_1L := MeasureHeight(fontOptions, fontName, ["Button", "", ""]) ; 含有一行文本的按钮高度（Height of a button with 1 line of text）
     H_BUTTON_2L := MeasureHeight(fontOptions, fontName, ["Button", "", "`n"]) ; 含有两行文本的按钮高度（Height of a button with 2 lines of text）
@@ -182,9 +184,11 @@ Stringtable := {
         Config: {
             Title: "参数设置`nParameter Configuration",
             RepetitionPrompt: "重复次数`nRepetition",
-            IntervalPrompt: "命令执行间隔`nCommand Execution Interval",
+            ExecutionIntervalPrompt: "命令执行间隔`nCommand Execution Interval",
             AbortHotkeyPrompt: "中止热键`nAbort Hotkey",
             SingleKeyToHoldPrompt: "待按住的单键`nSingle-Key to Hold",
+            HoldDetectIntervalPrompt: "长按检测间隔`nHold Detection Interval",
+            HoldCooldownPrompt: "长按冷却`nHold Cooldown",
             HoldSingleKeyHotkeyPrompt: "按住单键热键`nSingle-Key Hold Hotkey",
             HoldSequenceHotkeyPrompt: "按住序列热键`nSequence Hold Hotkey",
             UpdateButton: "更新/Update",
@@ -258,11 +262,11 @@ Config_default := {
         RepetitionValue:                ["Text",        470,    PadY * 2 + H_TEXT_2L * 1.25,                                                        90,                 H_TEXT_1L,      "",         ""],
         MeleeResetRepetitionButton:     ["Button",      560,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_BUTTON_2L) / 2,                               120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.MeleeResetButton],
         RangedResetRepetitionButton:    ["Button",      690,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_BUTTON_2L) / 2,                               120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.RangedResetButton],
-        IntervalLabel:                  ["Text",        0,      PadY * 3 + H_TEXT_2L * 2,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.IntervalPrompt],
-        IntervalEdit:                   ["Edit",        250,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   interval],
-        UpdateIntervalButton:           ["Button",      340,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        IntervalValue:                  ["Text",        470,    PadY * 3 + H_TEXT_2L * 2.25,                                                        90,                 H_TEXT_1L,      "",         ""],
-        ResetIntervalButton:            ["Button",      560,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        ExecutionIntervalLabel:         ["Text",        0,      PadY * 3 + H_TEXT_2L * 2,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.ExecutionIntervalPrompt],
+        ExecutionIntervalEdit:          ["Edit",        250,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   executionInterval],
+        UpdateExecutionIntervalButton:  ["Button",      340,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        ExecutionIntervalValue:         ["Text",        470,    PadY * 3 + H_TEXT_2L * 2.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetExecutionIntervalButton:   ["Button",      560,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
         AbortHotkeyLabel:               ["Text",        0,      PadY * 4 + H_TEXT_2L * 3,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.AbortHotkeyPrompt],
         AbortHotkeyEdit:                ["Edit",        250,    PadY * 4 + H_TEXT_2L * 3 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "",         K_Stop],
         UpdateAbortHotkeyButton:        ["Button",      340,    PadY * 4 + H_TEXT_2L * 3 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
@@ -273,9 +277,19 @@ Config_default := {
         UpdateSingleKeyToHoldButton:    ["Button",      340,    PadY * 5 + H_TEXT_2L * 4 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
         SingleKeyToHoldValue:           ["Text",        470,    PadY * 5 + H_TEXT_2L * 4.25,                                                        90,                 H_TEXT_1L,      "",         ""],
         ResetSingleKeyToHoldButton:     ["Button",      560,    PadY * 5 + H_TEXT_2L * 4 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        ResetAllParameterButton:        ["Button",      310,    PadY * 6 + H_TEXT_2L * 5,                                                           180,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.ResetAllButton],
-        Separator:                      ["Text",        0,      PadY * 7 + H_TEXT_2L * 5 + H_BUTTON_2L,                                             800,                H_HSEPARATOR,   "0x10",     ""],
-        AbortHotkeyHelpDoc:             ["Text",        0,      PadY * 8 + H_TEXT_2L * 5 + H_BUTTON_2L + H_HSEPARATOR,                              800,                H_TEXT_15L,     "",         Stringtable.Right.HelpDoc],
+        HoldDetectIntervalLabel:        ["Text",        0,      PadY * 6 + H_TEXT_2L * 5,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.HoldDetectIntervalPrompt],
+        HoldDetectIntervalEdit:         ["Edit",        250,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   holdDetectInterval],
+        UpdateHoldDetectIntervalButton: ["Button",      340,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        HoldDetectIntervalValue:        ["Text",        470,    PadY * 6 + H_TEXT_2L * 5.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetHoldDetectIntervalButton:  ["Button",      560,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        HoldCooldownLabel:              ["Text",        0,      PadY * 7 + H_TEXT_2L * 6,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.HoldCooldownPrompt],
+        HoldCooldownEdit:               ["Edit",        250,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   holdCooldown],
+        UpdateHoldCooldownButton:       ["Button",      340,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        HoldCooldownValue:              ["Text",        470,    PadY * 7 + H_TEXT_2L * 6.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetHoldCooldownButton:        ["Button",      560,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        ResetAllParameterButton:        ["Button",      310,    PadY * 8 + H_TEXT_2L * 7,                                                           180,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.ResetAllButton],
+        Separator:                      ["Text",        0,      PadY * 9 + H_TEXT_2L * 7 + H_BUTTON_2L,                                             800,                H_HSEPARATOR,   "0x10",     ""],
+        AbortHotkeyHelpDoc:             ["Text",        0,      PadY * 10 + H_TEXT_2L * 7 + H_BUTTON_2L + H_HSEPARATOR,                             800,                H_TEXT_17L,     "",         Stringtable.Right.HelpDoc],
     }
 }
 ;; 控件添加层（Control addition layer）
@@ -400,7 +414,7 @@ RebuildUI() {
  * 构建主界面。<br>Create the main GUI.
  */
 CreateMainGui() {
-    global MyGui, SettingsMenu, ActionConfigs, B_HoldSequence, B_RunSequence, B_Stop, T_Status, P_Progress, E_SingleKey, CheckBox1, CheckBox2, CheckBox3, L_KeySequence, E_Repetition, T_Repetition, E_Interval, T_Interval, E_StopKey, T_StopKey, E_SingleKeyToHold, T_SingleKeyToHold
+    global MyGui, SettingsMenu, ActionConfigs, B_HoldSequence, B_RunSequence, B_Stop, T_Status, P_Progress, E_SingleKey, CheckBox1, CheckBox2, CheckBox3, L_KeySequence, E_Repetition, T_Repetition, E_ExecutionInterval, T_ExecutionInterval, E_StopKey, T_StopKey, E_SingleKeyToHold, T_SingleKeyToHold, E_HoldDetectInterval, T_HoldDetectInterval, E_HoldCooldown, T_HoldCooldown
     ; 下面设置图形化界面（Set the graphical user interface）    
     MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
     ;; 标题（Title）
@@ -488,11 +502,11 @@ CreateMainGui() {
     B_Repetition_Reset_Melee := AddCtrl(MyGui, 5, Config_default.Right_Controls.MeleeResetRepetitionButton)
     B_Repetition_Reset_Ranged := AddCtrl(MyGui, 5, Config_default.Right_Controls.RangedResetRepetitionButton)
     ;;; 命令执行间隔（Command execution interval）
-    AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalLabel) ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
-    E_Interval := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalEdit)
-    B_Interval_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateIntervalButton)
-    T_Interval := AddCtrl(MyGui, 5, Config_default.Right_Controls.IntervalValue)
-    B_Interval_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetIntervalButton)
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.ExecutionIntervalLabel) ; 相邻参数行间隔20像素（Neighboring parameter lines are 20 pixels away）
+    E_ExecutionInterval := AddCtrl(MyGui, 5, Config_default.Right_Controls.ExecutionIntervalEdit)
+    B_ExecutionInterval_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateExecutionIntervalButton)
+    T_ExecutionInterval := AddCtrl(MyGui, 5, Config_default.Right_Controls.ExecutionIntervalValue)
+    B_ExecutionInterval_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetExecutionIntervalButton)
     ;;; 中止热键（Abort hotkey）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyLabel)
     E_StopKey := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyEdit)
@@ -505,6 +519,18 @@ CreateMainGui() {
     B_SingleKeyToHold_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateSingleKeyToHoldButton)
     T_SingleKeyToHold := AddCtrl(MyGui, 5, Config_default.Right_Controls.SingleKeyToHoldValue)
     B_SingleKeyToHold_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetSingleKeyToHoldButton)
+    ;;; 长按检测间隔（Hold detection interval）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldDetectIntervalLabel)
+    E_HoldDetectInterval := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldDetectIntervalEdit)
+    B_HoldDetectInterval_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldDetectIntervalButton)
+    T_HoldDetectInterval := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldDetectIntervalValue)
+    B_HoldDetectInterval_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldDetectIntervalButton)
+    ;;; 长按冷却（Hold cooldown）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldCooldownLabel)
+    E_HoldCooldown := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldCooldownEdit)
+    B_HoldCooldown_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateHoldCooldownButton)
+    T_HoldCooldown := AddCtrl(MyGui, 5, Config_default.Right_Controls.HoldCooldownValue)
+    B_HoldCooldown_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldCooldownButton)
     ;;; 全参数复位按钮（Button to reset all parameters）
     B_All_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAllParameterButton)
     ;; 右侧第一分隔线（First separator of the left part）
@@ -586,14 +612,20 @@ CreateMainGui() {
     B_Repetition_Reset_Melee.OnEvent("Click", (*) => A_Param_Repetition_ResetValue(false))
     B_Repetition_Reset_Ranged.OnEvent("Click", (*) => A_Param_Repetition_ResetValue(true))
     ;;; 命令执行间隔（Command execution interval）
-    B_Interval_Update.OnEvent("Click", A_Param_Interval_UpdateValue)
-    B_Interval_Reset.OnEvent("Click", A_Param_Interval_ResetValue)
+    B_ExecutionInterval_Update.OnEvent("Click", A_Param_ExecutionInterval_UpdateValue)
+    B_ExecutionInterval_Reset.OnEvent("Click", A_Param_ExecutionInterval_ResetValue)
     ;;; 中止热键（Abort hotkey）
     B_StopKey_Update.OnEvent("Click", A_Param_StopKey_UpdateValue)
     B_StopKey_Reset.OnEvent("Click", A_Param_StopKey_ResetValue)
     ;;; 待按住的单键（Single key to hold）
     B_SingleKeyToHold_Update.OnEvent("Click", A_Param_SingleKeyToHold_UpdateValue)
     B_SingleKeyToHold_Reset.OnEvent("Click", A_Param_SingleKeyToHold_ResetValue)
+    ;;; 长按检测间隔（Hold detect interval）
+    B_HoldDetectInterval_Update.OnEvent("Click", A_Param_HoldDetectInterval_UpdateValue)
+    B_HoldDetectInterval_Reset.OnEvent("Click", A_Param_HoldDetectInterval_ResetValue)
+    ;;; 长按冷却（Hold cooldown）
+    B_HoldCooldown_Update.OnEvent("Click", A_Param_HoldCooldown_UpdateValue)
+    B_HoldCooldown_Reset.OnEvent("Click", A_Param_HoldCooldown_ResetValue)
     ;;; 全部复位（Reset all）
     B_All_Reset.OnEvent("Click", A_Param_All_Reset)
     ;; 设置窗口关闭和Esc键事件（Set windows close event）
@@ -602,8 +634,10 @@ CreateMainGui() {
     
     ; 其它准备工作（Other preparations）
     A_Param_Repetition_UpdateDisplay(maxLoops)
-    A_Param_Interval_UpdateDisplay(interval)
+    A_Param_ExecutionInterval_UpdateDisplay(executionInterval)
     A_Param_StopKey_UpdateDisplay(K_Stop)
+    A_Param_HoldDetectInterval_UpdateDisplay(holdDetectInterval)
+    A_Param_HoldCooldown_UpdateDisplay(holdCooldown)
     SetTitleMatchMode(3) ; 设置窗口名称精确匹配（Set the window to be matched the exact name）
 }
 
@@ -726,7 +760,7 @@ A_StartAction(actionId, *) {
             T_Progress_Monitor.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
             
             ; 短暂延迟，确保游戏能处理按键（Short lag to ensure the game handle frequent key press request）
-            Sleep(interval)
+            Sleep(executionInterval)
         }
     }
     else {
@@ -793,7 +827,7 @@ A_StartAction(actionId, *) {
             T_Progress_Monitor.Text := Format("执行中…… | Running ...`n{1:d}/{2:d}", loopCount, maxLoops)
             
             ; 短暂延迟，确保游戏能处理按键（Short lag to ensure the game handle frequent key press request）
-            Sleep(interval)
+            Sleep(executionInterval)
         }
         
         ; 松开控制键（Release control keys）
@@ -974,14 +1008,14 @@ A_Param_Repetition_ResetValue(ranged) {
 /**
  * 读取命令执行间隔编辑框并更新命令执行间隔。<br>Read the command execution interval edit box and update command execution interval.
  */
-A_Param_Interval_UpdateValue(*) {
-    global interval
-    inputValue := E_Interval.Value
+A_Param_ExecutionInterval_UpdateValue(*) {
+    global executionInterval
+    inputValue := E_ExecutionInterval.Value
     
     if Integer(inputValue) >= 0 {
-        interval := Integer(inputValue)
+        executionInterval := Integer(inputValue)
         T_Status.Text := Format("命令执行间隔已更新。`nCommand execution interval has been updated.", inputValue)
-        A_Param_Interval_UpdateDisplay(interval)
+        A_Param_ExecutionInterval_UpdateDisplay(executionInterval)
     }
     else 
         T_Status.Text := "命令执行间隔必须大于等于0。`nCommand execution interval must be greater than 0."
@@ -991,17 +1025,17 @@ A_Param_Interval_UpdateValue(*) {
  * 更新命令执行间隔的显示。<br>Update the display of command execution interval.
  * @param {Integer} interval 要显示的命令执行间隔。单位为毫秒。<br>The command execution interval to display, in milliseconds.
  */
-A_Param_Interval_UpdateDisplay(interval) {
-    T_Interval.Text := Format("{1:d} ms", interval)
+A_Param_ExecutionInterval_UpdateDisplay(interval) {
+    T_ExecutionInterval.Text := Format("{1:d} ms", interval)
 }
 
 /**
  * 重置命令执行间隔。<br>Reset the command execution interval.
  */
-A_Param_Interval_ResetValue(*) {
-    global interval
-    interval := 0
-    A_Param_Interval_UpdateDisplay(interval)
+A_Param_ExecutionInterval_ResetValue(*) {
+    global executionInterval
+    executionInterval := 0
+    A_Param_ExecutionInterval_UpdateDisplay(executionInterval)
     T_Status.Text := "命令执行间隔已复位。`nCommand execution interval has been reset."
 }
 
@@ -1039,9 +1073,9 @@ A_Param_StopKey_UpdateValue(*) {
     else if VerifyKeyValidity(inputValue) {
         Hotkey(K_Stop, "Off") ; 在注册下一个热键之前，移除上一个热键（Before registering the next hotkey, remove the previous one）
         K_Stop := inputValue
+        T_Status.Text := "中止热键已更新。`nThe stop hotkey has been updated."
         A_Param_StopKey_UpdateDisplay(K_Stop)
         Hotkey(K_Stop, A_Stop, "On")
-        T_Status.Text := "中止热键已更新。`nThe stop hotkey has been updated."
     }
     else 
         T_Status.Text := "无效的中止热键。`nInvalid stop hotkey."
@@ -1079,8 +1113,8 @@ A_Param_SingleKeyToHold_UpdateValue(*) {
     }
     else if VerifyKeyValidity(inputValue) {
         singleKeyToHold := inputValue
-        A_Param_SingleKeyToHold_UpdateDisplay(singleKeyToHold)
         T_Status.Text := "待按住的单键已更新。`nThe single key to hold has been updated."
+        A_Param_SingleKeyToHold_UpdateDisplay(singleKeyToHold)
     }
     else 
         T_Status.Text := "无效的待按住的单键。`nInvalid single key to hold."
@@ -1104,6 +1138,80 @@ A_Param_SingleKeyToHold_ResetValue(*) {
     T_Status.Text := "待按住的单键已复位。`nThe single key to hold has been reset."
 }
 
+/**
+ * 读取长按检测间隔编辑框并更新长按检测间隔。<br>Read the hold detection interval edit box and update the hold detection interval.
+ */
+A_Param_HoldDetectInterval_UpdateValue(*) {
+    global holdDetectInterval
+    inputValue := E_HoldDetectInterval.Value
+    
+    if (StrLen(inputValue) = 0) {
+        T_Status.Text := "请输入一个长按检测间隔。`nPlease input a hold detection interval."
+    }
+    else if Integer(inputValue) >= 0 {
+        holdDetectInterval := Integer(inputValue)
+        T_Status.Text := "长按检测间隔已更新。`nThe hold detection interval has been updated."
+        A_Param_HoldDetectInterval_UpdateDisplay(holdDetectInterval)
+    }
+    else 
+        T_Status.Text := "无效的长按检测间隔。`nInvalid hold detection interval."
+}
+
+/**
+ * 更新长按检测间隔的显示。<br>Update the display of hold detection interval.
+ * @param {String} holdDetectInterval 有效的长按检测间隔。<br>VALID hold detection interval.
+ */
+A_Param_HoldDetectInterval_UpdateDisplay(holdDetectInterval) {
+    T_HoldDetectInterval.Value := Format("{1:d} ms", holdDetectInterval)
+}
+
+/**
+ * 重置长按检测间隔。<br>Reset the hold detection interval.
+ */
+A_Param_HoldDetectInterval_ResetValue(*) {
+    global holdDetectInterval
+    holdDetectInterval := 250
+    A_Param_HoldDetectInterval_UpdateDisplay(holdDetectInterval)
+    T_Status.Text := "长按检测间隔已复位。`nThe hold detection interval has been reset."
+}
+
+/**
+ * 读取长按冷却编辑框并更新长按冷却。<br>Read the hold cooldown edit box and update the hold cooldown.
+ */
+A_Param_HoldCooldown_UpdateValue(*) {
+    global holdCooldown
+    inputValue := E_HoldCooldown.Value
+    
+    if (StrLen(inputValue) = 0) {
+        T_Status.Text := "请输入一个长按冷却。`nPlease input a hold cooldown."
+    }
+    else if Integer(inputValue) >= 0 {
+        holdCooldown := Integer(inputValue)
+        T_Status.Text := "长按冷却已更新。`nThe hold cooldown has been updated."
+        A_Param_HoldCooldown_UpdateDisplay(holdCooldown)
+    }
+    else 
+        T_Status.Text := "无效的长按冷却。`nInvalid hold cooldown."
+}
+
+/**
+ * 更新长按冷却的显示。<br>Update the display of hold cooldown.
+ * @param {String} holdCooldown 有效的长按冷却。<br>VALID hold cooldown.
+ */
+A_Param_HoldCooldown_UpdateDisplay(holdCooldown) {
+    T_HoldCooldown.Value := Format("{1:d} s", holdCooldown)
+}
+
+/**
+ * 重置长按冷却。<br>Reset the hold cooldown.
+ */
+A_Param_HoldCooldown_ResetValue(*) {
+    global holdCooldown
+    holdCooldown := 0
+    A_Param_HoldCooldown_UpdateDisplay(holdCooldown)
+    T_Status.Text := "长按冷却已复位。`nThe hold cooldown has been reset."
+}
+
 ; 重置所有参数（Reset all parameters）
 /**
  * 重置所有参数。<br>Reset all parameters.
@@ -1112,9 +1220,11 @@ A_Param_SingleKeyToHold_ResetValue(*) {
  */
 A_Param_All_Reset(*) {
     A_Param_Repetition_ResetValue(true)
-    A_Param_Interval_ResetValue()
+    A_Param_ExecutionInterval_ResetValue()
     A_Param_StopKey_ResetValue()
     A_Param_SingleKeyToHold_ResetValue()
+    A_Param_HoldDetectInterval_ResetValue()
+    A_Param_HoldCooldown_ResetValue()
     T_Status.Text := "所有参数已复位。`nAll parameters have been reset."
 }
 
@@ -1174,9 +1284,9 @@ A_KeySequence_Push(*) {
         seqStr := "Ctrl+" seqStr
     }
     ; 修改数据结构（Edit data structure）
-    keySeq.Push([seqCode, seqStr, interval])
+    keySeq.Push([seqCode, seqStr, executionInterval])
     ; 展示结果（Display the result）
-    L_KeySequence.Add("", keySeq.Length, seqStr, interval)
+    L_KeySequence.Add("", keySeq.Length, seqStr, executionInterval)
     L_KeySequence.ModifyCol(2, "AutoHdr")
     L_KeySequence.ModifyCol(3, "AutoHdr")
     ; 更新按钮的可用性（Update button availability）
