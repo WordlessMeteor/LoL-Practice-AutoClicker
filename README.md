@@ -30,17 +30,28 @@ This repository stores an auto-clicker **specifically used in <ins>Practice Tool
 6. Double-click this file to run.
 7. If a user account control (UAC) screen pops up, please select "Yes".
 ## Features
-This program supports repetitively pressing the following three kinds of keys:
-1. Fixed cheat functions.
-    - Functions that have a potential demand of frequent key press are filtered from all cheat functions in Practice Tool and collected into Area L2.
-2. Custom key combinations.
-    - This allows users to customize a key combination to press repetitively. A key combination is composed of control keys and **a** single key.
-    - When the user changes the default hotkey of those fixed functions, they can input the changed key combination in Area L3 and run it.
-3. Custom key combination sequence.
-    - This benefits the test of [Arena GoH Evelynn Easter Egg BUG](https://youtu.be/XOpag8x34Hw).
-        - For example, the user may **push** Ctrl + 1 and Ctrl + 3 into the key sequence stack repetitively to let the champion alternate between joking and dancing, thus creating a server instant when there might be multiple players changing from not dancing into dancing if possible.
-
-Besides, this program supports parameter configuration on the right side, including the number of repeats, time interval between two successive key presses and abort hotkey.
+1. Repetitively press a key.
+    1. Fixed cheat functions.
+        - Functions that have a potential demand of frequent key press are filtered from all cheat functions in Practice Tool and collected into Area L2.
+    2. Custom key combinations.
+        - This allows users to customize a key combination to press repetitively. A key combination is composed of control keys and **a** single key.
+        - When the user changes the default hotkey of those fixed functions, they can input the changed key combination in Area L3 and run it.
+    3. Custom key combination sequence.
+        - This benefits the test of [Arena GoH Evelynn Easter Egg BUG](https://youtu.be/XOpag8x34Hw).
+            - For example, the user may **push** Ctrl + 1 and Ctrl + 3 into the key sequence stack to let the champion alternate between joking and dancing, thus creating a server instant when there might be multiple players changing from not dancing into dancing if possible.
+2. (Beta) Keep holding a key.
+    1. Hold a single key.
+        - For example, the user may specify the single key to hold as "c". Then, click <ins>Hold</ins> button. After that, C key is kept holding in game, so that the advanced stat panel persists.
+    2. Hold multiple single keys.
+        - For example, the user may **push** c and z into the key sequence stack. Then, click <ins>Hold Sequence</ins> button. After that, C and Z keys are kept holding in game, so that the advanced stat panel and chat history persist.
+3. Adjust parameters.
+    - Number of repeats.
+    - Time interval between two successive key presses.
+    - ~~Abort hotkey.~~
+    - The single key to hold.
+    - Time interval between two successive detections of whether single keys are held.
+    - Single-key hold detection cooldown.
+        - It means when the program detects some single keys are released, how much time the program should wait for detection to restart.
 ## Notes
 1. The default font of this program is <ins>12, bold</ins>. Users may adjust the font size and boldness in settings. On the monitor with low resolution and high scale ratio (e.g. 1080P with 125% scale ratio), the GUI might not display completely. In that case, please lower the font size, e.g. from 12 to 10.
 2. After "Progress always on top" settings option is unchecked, when the auto-clicker repetitively clicks some key, the progress window no longer pops up in the center of the screen. This is likely to impact switching between windows, so think twice before you uncheck this option.
