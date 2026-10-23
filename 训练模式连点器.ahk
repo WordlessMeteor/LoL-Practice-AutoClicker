@@ -23,6 +23,7 @@ K_Stop := "#s" ; 停止热键（Stop hotkey）
 singleKeyToHold := "" ; 待按住的单键（Single key to hold）
 holdDetectInterval := 250 ; 按住检测间隔（Hold detection interval）
 holdCooldown := 0 ; 长按冷却时间（Hold cooldown）
+keyHeld := [] ; 待检测按下状态的单键（Single keys awaiting to detect whether it's on hold）
 Hotkey(K_Stop, A_Stop, "On")
 keySeq := [] ; 按键序列。每个元素是一个数组；每个数组的第一个元素是按键代码，第二个元素是按键的字符串表示，第三个元素是按下这个按键后经历多少延迟（Key sequence. Each element is an array; the first element of each array is key code, the second element is the string representation of the key to press, and the third element is how much time to wait after this key is pressed）
 IsRunning := false ; 标记是否在执行某个功能（Mark whether a function is being performed）
@@ -211,38 +212,38 @@ Config_default := {
     
     ; 每个区域内的控件规格（Control speculation in each area）
     Left_Controls: {
-        ;                           类型            横坐标   纵坐标                                                                                                           宽度                高度                选项                     文本
-        ;                           Type            X       Y                                                                                                               Width               Height              Options                 Text
-        Title:                      ["Text",        0,      PadY,                                                                                                           500,                H_TEXT_2L,          "Center",               Stringtable.Left.Declaration.Text1],
-        Declaration:                ["Text",        0,      PadY * 2 + H_TEXT_2L,                                                                                           500,                H_TEXT_3L,          "Center",               Stringtable.Left.Declaration.Text2],
-        Separator1:                 ["Text",        0,      PadY * 3 + H_TEXT_2L + H_TEXT_3L,                                                                               500,                H_HSEPARATOR,       "0x10",                 ""],
-        AddGoldButton:              ["Button",      25,     PadY * 4 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR,                                                                200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddGold],
-        LevelUpButton:              ["Button",      275,    PadY * 4 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR,                                                                200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.LevelUp],
-        AddHPButton:                ["Button",      25,     PadY * 5 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L,                                                  200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddHP],
-        DecHPButton:                ["Button",      275,    PadY * 5 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L,                                                  200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.DecHP],
-        AddResistButton:            ["Button",      25,     PadY * 6 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 2,                                              200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddResist],
-        DecResistButton:            ["Button",      275,    PadY * 6 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 2,                                              200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.DecResist],
-        StackItemButton:            ["Button",      25,     PadY * 7 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 3,                                              200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.StackItem],
-        Separator2:                 ["Text",        0,      PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 4,                                              500,                H_HSEPARATOR,       "0x10",                 ""],
-        CustomTitle:                ["Text",        0,      PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + 20,                                     100,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.Title],
-        Checkbox1:                  ["Checkbox",    100,    PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                          60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox1],
-        Checkbox2:                  ["Checkbox",    100,    PadY * 10 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L,                         60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox2],
-        Checkbox3:                  ["Checkbox",    100,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 2,                     60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox3],
-        CustomPrompt:               ["Text",        170,    PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                          220,                H_TEXT_2L,          "",                     Stringtable.Left.Custom.Prompt],
-        SingleKeyEdit:              ["Edit",        170,    PadY * 10 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                     220,                H_EDIT_1L,          "",                     ""],
-        SingleKeyHoldButton:        ["Button",      400,    PadY * 10 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                         100,                H_BUTTON_1L,        "",                     Stringtable.Left.Custom.HoldButton],
-        SingleKeyRunButton:         ["Button",      400,    PadY * 10 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                     100,                H_BUTTON_1L,        "",                     Stringtable.Left.Custom.RunButton],
-        SequenceLoopTitle:          ["Text",        0,      PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                     160,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.SequenceLoop],
-        PushButton:                 ["Button",      170,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PushButton],
-        PopButton:                  ["Button",      280,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PopButton],
-        ClearButton:                ["Button",      390,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                     100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.ClearButton],
-        HoldSequenceButton:         ["Button",      25,     PadY * 13 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                 200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Custom.HoldSequenceButton],
-        RunSequenceButton:          ["Button",      275,    PadY * 13 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                 200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Custom.RunSequenceButton],
-        Separator3:                 ["Text",        0,      PadY * 14 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                 500,                H_HSEPARATOR,       "0x10",                 ""],
-        StopButton:                 ["Button",      175,    PadY * 15 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                 150,                H_BUTTON_2L,        "Center Disabled",      Stringtable.Left.Status.StopButton],
-        StatusText:                 ["Text",        0,      PadY * 16 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3,                 500,                H_TEXT_2L,          "Center",               Stringtable.Left.Status.Text],
-        ProgressBar:                ["Progress",    25,     PadY * 17 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3,                 450,                H_PROGRESS,         "Range0-100 -Smooth",   ""],
-        ExitButton:                 ["Button",      190,    PadY * 18 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3 + H_PROGRESS,    120,                H_BUTTON_1L,        "Center",               Stringtable.Left.Status.ExitButton],
+        ;                           类型            横坐标   纵坐标                                                                                                                   宽度                高度                选项                     文本
+        ;                           Type            X       Y                                                                                                                       Width               Height              Options                 Text
+        Title:                      ["Text",        0,      PadY,                                                                                                                   500,                H_TEXT_2L,          "Center",               Stringtable.Left.Declaration.Text1],
+        Declaration:                ["Text",        0,      PadY * 2 + H_TEXT_2L,                                                                                                   500,                H_TEXT_3L,          "Center",               Stringtable.Left.Declaration.Text2],
+        Separator1:                 ["Text",        0,      PadY * 3 + H_TEXT_2L + H_TEXT_3L,                                                                                       500,                H_HSEPARATOR,       "0x10",                 ""],
+        AddGoldButton:              ["Button",      25,     PadY * 4 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR,                                                                        200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddGold],
+        LevelUpButton:              ["Button",      275,    PadY * 4 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR,                                                                        200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.LevelUp],
+        AddHPButton:                ["Button",      25,     PadY * 5 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L,                                                          200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddHP],
+        DecHPButton:                ["Button",      275,    PadY * 5 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L,                                                          200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.DecHP],
+        AddResistButton:            ["Button",      25,     PadY * 6 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 2,                                                      200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.AddResist],
+        DecResistButton:            ["Button",      275,    PadY * 6 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 2,                                                      200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.DecResist],
+        StackItemButton:            ["Button",      25,     PadY * 7 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 3,                                                      200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Button.StackItem],
+        Separator2:                 ["Text",        0,      PadY * 8 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR + H_BUTTON_2L * 4,                                                      500,                H_HSEPARATOR,       "0x10",                 ""],
+        CustomTitle:                ["Text",        0,      PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + 20,                                             100,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.Title],
+        Checkbox1:                  ["Checkbox",    100,    PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                                  60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox1],
+        Checkbox2:                  ["Checkbox",    100,    PadY * 10 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L,                                 60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox2],
+        Checkbox3:                  ["Checkbox",    100,    PadY * 11 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 2,                             60,                 H_CHECKBOX_1L,      "",                     Stringtable.Left.Custom.Checkbox3],
+        CustomPrompt:               ["Text",        170,    PadY * 9 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                                  220,                H_TEXT_2L,          "",                     Stringtable.Left.Custom.Prompt],
+        SingleKeyEdit:              ["Edit",        170,    PadY * 10 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                             220,                H_EDIT_1L,          "",                     ""],
+        SingleKeyHoldButton:        ["Button",      400,    PadY * 10 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                                 100,                H_BUTTON_1L,        "",                     Stringtable.Left.Custom.HoldButton],
+        SingleKeyRunButton:         ["Button",      400,    PadY * 10 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4,                                             100,                H_BUTTON_1L,        "",                     Stringtable.Left.Custom.RunButton],
+        SequenceLoopTitle:          ["Text",        0,      PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                             160,                H_TEXT_2L,          "Center",               Stringtable.Left.Custom.SequenceLoop],
+        PushButton:                 ["Button",      170,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                             100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PushButton],
+        PopButton:                  ["Button",      280,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                             100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.PopButton],
+        ClearButton:                ["Button",      390,    PadY * 12 + H_TEXT_2L + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                             100,                H_BUTTON_1L,        "Center",               Stringtable.Left.Custom.ClearButton],
+        HoldSequenceButton:         ["Button",      25,     PadY * 13 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                         200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Custom.HoldSequenceButton],
+        RunSequenceButton:          ["Button",      275,    PadY * 13 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 4 + H_CHECKBOX_1L * 3,                         200,                H_BUTTON_2L,        "Center",               Stringtable.Left.Custom.RunSequenceButton],
+        Separator3:                 ["Text",        0,      PadY * 14 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 2 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                         500,                H_HSEPARATOR,       "0x10",                 ""],
+        StopButton:                 ["Button",      175,    PadY * 15 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 5 + H_CHECKBOX_1L * 3,                         150,                H_BUTTON_2L,        "Center Disabled",      Stringtable.Left.Status.StopButton],
+        StatusText:                 ["Text",        0,      PadY * 16 + H_TEXT_2L * 2 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3,                         500,                H_TEXT_2L,          "Center",               Stringtable.Left.Status.Text],
+        ProgressBar:                ["Progress",    25,     PadY * 17 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3,                         450,                H_PROGRESS,         "Range0-100 -Smooth",   ""],
+        ExitButton:                 ["Button",      190,    PadY * 18 + H_TEXT_2L * 3 + H_TEXT_3L + H_HSEPARATOR * 3 + H_BUTTON_2L * 6 + H_CHECKBOX_1L * 3 + H_PROGRESS,            120,                H_BUTTON_1L,        "Center",               Stringtable.Left.Status.ExitButton],
     },
     VSeparator1:            ["Text",        0,      PadY,                                                                                                           W_VSEPARATOR,       850,                "0x11",                 ""],
     Middle_Controls: {
@@ -403,6 +404,7 @@ ShowAbout(*) {
  */
 RebuildUI() {
     global MyGui
+    StopKeyHoldDetect()
     if IsSet(MyGui) && MyGui.Hwnd
         MyGui.Destroy()
     CreateMainGui()
@@ -605,7 +607,7 @@ CreateMainGui() {
     B_RunSequence.OnEvent("Click", (*) => A_StartAction("sequence"))
     ;; 退出按钮（Exit button）
     B_Stop.OnEvent("Click", A_Stop)
-    B_Quit.OnEvent("Click", (*) => ExitApp())
+    B_Quit.OnEvent("Click", (*) => (StopKeyHoldDetect(), ExitApp()))
     ;; 参数设置（Parameter configuration）
     ;;; 重复次数（Repetition）
     B_Repetition_Update.OnEvent("Click", A_Param_Repetition_UpdateValue)
@@ -629,8 +631,8 @@ CreateMainGui() {
     ;;; 全部复位（Reset all）
     B_All_Reset.OnEvent("Click", A_Param_All_Reset)
     ;; 设置窗口关闭和Esc键事件（Set windows close event）
-    MyGui.OnEvent("Close", (*) => ExitApp())  ; 点击右上角×（Click on the "×" button on the top-right corner）
-    ; MyGui.OnEvent("Escape", (*) => ExitApp()) ; 按Esc键关闭程序。暂时禁用（Press "Esc" to close the app. Temporarily disabled）
+    MyGui.OnEvent("Close", (*) => (StopKeyHoldDetect(), ExitApp()))  ; 点击右上角×（Click on the "×" button on the top-right corner）
+    ; MyGui.OnEvent("Escape", (*) => (StopKeyHoldDetect(), ExitApp())) ; 按Esc键关闭程序。暂时禁用（Press "Esc" to close the app. Temporarily disabled）
     
     ; 其它准备工作（Other preparations）
     A_Param_Repetition_UpdateDisplay(maxLoops)
@@ -658,6 +660,11 @@ MyGui.Show()
  * - decunit10resistance: 移除10双抗。<br>Remove 10 resistances.
  * - custom: 自定义单键。<br>Custom single key.
  * - sequence: 按键序列。<br>Key sequence.
+ * @returns 状态码。<br>Status code.
+ * - 0: 动作完成或被取消。<br>Action finished or canceled.
+ * - 1: 未找到游戏客户端窗口。<br>Game client window not found.
+ * - 2: 未能激活游戏客户端窗口。<br>Fail to activate game client window.
+ * - 3: 发送按键失败。<br>Fail to send keys.
  */
 A_StartAction(actionId, *) {
     global IsRunning, StopRequested
@@ -863,6 +870,9 @@ A_StartAction(actionId, *) {
 
 /**
  * 循环按下一个自定义单键。<br>Press a custom single key in a loop.
+ * @returns {Integer} 状态码。<br>Status code.
+ * - 0: 成功启动自定义动作。<br>Succeed in starting the custom action.
+ * - 1: 单键读取失败。<br>Fail to read single key.
  */
 A_StartCustom(*) {
     ; 首先检查单键输入是否合法（First check whether the single key input is valid）
@@ -894,6 +904,10 @@ A_StartCustom(*) {
 ; 按住事件（Hold event）
 /**
  * 按住一个单键。<br>Hold a single key.
+ * @returns {Integer} 状态码。<br>Status code.
+ * - 0: 成功按下单键。<br>Succeed in holding single keys.
+ * - 1: 未找到游戏客户端窗口。<br>Game client window not found.
+ * - 2: 未能激活游戏客户端窗口。<br>Fail to activate game client window.
  */
 A_HoldSingleKey(*) {
     if singleKeyToHold == ""
@@ -913,6 +927,8 @@ A_HoldSingleKey(*) {
         }
         else {
             Send("{" singleKeyToHold " Down}")
+            keyHeld.Push(singleKeyToHold)
+            StartKeyHoldDetect()
             return 0
         }
     }
@@ -920,6 +936,10 @@ A_HoldSingleKey(*) {
 
 /**
  * 同时按住单键序列中的多个单键。<br>Hold multiple single keys in a single key sequence in the meantime.
+ * @returns {Integer} 状态码。<br>Status code.
+ * - 0: 成功按下单键。<br>Succeed in holding single keys.
+ * - 1: 未找到游戏客户端窗口。<br>Game client window not found.
+ * - 2: 未能激活游戏客户端窗口。<br>Fail to activate game client window.
  */
 A_HoldSingleKeySequence(*) {
     if !WinExist("League of Legends (TM) Client") {
@@ -945,10 +965,70 @@ A_HoldSingleKeySequence(*) {
             try {
                 Send("{" keyStr " Down}")
             } catch Error as e {
+                keyHeld.Length := 0
                 T_Status.Text := "错误：发送按键失败。`nError: Failed to send keys."
-                break
+                return 3
+            } else {
+                keyHeld.Push(keyStr)
             }
         }
+        StartKeyHoldDetect()
+        return 0
+    }
+}
+
+/**
+ * 开始检测单键的按住状态。<br>Start detecting the hold status of single keys.
+ * 
+ * 在按下“按住”或者“按住序列”按钮，成功按下单键后会调用此过程。<br>This process is called when "Hold" or "Hold Sequence" button is pressed and single keys are held successfully.
+ */
+StartKeyHoldDetect() {
+    SetTimer(DetectKeyHold, holdDetectInterval)
+}
+
+/**
+ * 停止检测单键的按住状态。<br>Stop detecting the hold status of single keys.
+ * 
+ * 在切换到其它窗口时会调用此过程。<br>This process is called when the user switches to another window.
+ */
+StopKeyHoldDetect() {
+    SetTimer(DetectKeyHold, 0)
+    for key in keyHeld
+        Send("{" key " Up}") ; 在停止检测时，将所有要检测的单键松开（When detection is stopped, release all detected single keys）
+    keyHeld.Length := 0
+}
+
+/**
+ * 检测单键的按住状态。<br>Detect the hold status of single keys.
+ * @returns {Integer} 状态码。<br>Status code.
+ * - 0: 恢复单键按下状态。<br>Recover the hold status of single keys.
+ * - 1: 退出游戏而使得检测终止。<br>Game is quitted and the detection is ended.
+ * - 2: 切换到其它窗口而使得检测终止。<br>Toggle to another window and the detection is ended.
+ */
+DetectKeyHold(*) {
+    if !WinExist("League of Legends (TM) Client") {
+        T_Status.Text := "您已退出游戏。`nYou've quited the game."
+        StopKeyHoldDetect()
+        return 1
+    }
+    else if !WinActive("League of Legends (TM) Client") {
+        T_Status.Text := "您已切换到其它窗口。`nYou've switched to another window."
+        StopKeyHoldDetect()
+        return 2
+    }
+    else {
+        unheld_keys := []
+        for key in keyHeld {
+            if !GetKeyState(key, "P")
+                unheld_keys.Push(key)
+        }
+        if unheld_keys.Length > 0 {
+            Sleep(holdCooldown * 1000)
+            for key in unheld_keys {
+                Send("{" key " Down}")
+            }
+        }
+        return 0
     }
 }
 
