@@ -44,6 +44,8 @@ This repository stores an auto-clicker **specifically used in <ins>Practice Tool
         - For example, the user may specify the single key to hold as "c". Then, click <ins>Hold</ins> button. After that, C key is kept holding in game, so that the advanced stat panel persists.
     2. Hold multiple single keys.
         - For example, the user may **push** c and z into the key sequence stack. Then, click <ins>Hold Sequence</ins> button. After that, C and Z keys are kept holding in game, so that the advanced stat panel and chat history persist.
+    - **Warning: When the user presses keys too frequently, they may encounter a case where they can't do anything in League of Legends anymore starting from some time. If you encounter this case, please <ins>press Ctrl, Shift, Alt, space, Y or other keys that you think you've pressed</ins> to manually release them.**
+        - This isn't a problem of this program, so there's no fix for now.
 3. Adjust parameters.
     - Number of repeats.
     - Time interval between two successive key presses.
