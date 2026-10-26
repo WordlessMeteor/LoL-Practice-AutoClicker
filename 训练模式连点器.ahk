@@ -17,7 +17,8 @@ MsgBox "本脚本依赖于AutoHotKey v2.0。`nThis program relies on AutoHotKey 
 #!z::Run("https://github.com/WordlessMeteor/LoL-Practice-AutoClicker") ; Windows+Alt+Z打开程序GitHub页面（Windows + Alt + Z to open the program's GitHub page）
 
 ; 初始化全局变量（Initialize global variables）
-maxLoops := 1980 ; 重复次数（Repetition times）
+abilityHaste := 500 ; 通过无穷饥渴转换得到的技能急速（Ability haste converted through Endless Hunger）： AH = 5 + {0.13 (melee) || 0.1 (ranged)} × boAD = 5 + {0.13 (melee) || 0.1 (ranged)} × 0.025 × boHP = 5 + {0.00325 (melee) || 0.0025 (ranged)} × boHP
+maxLoops := AH2Repeat(abilityHaste, true) ; 重复次数（Repetition times）
 executionInterval := 0 ; 命令执行间隔（Command execution interval）
 K_Stop := "#s" ; 停止热键（Stop hotkey）
 singleKeyToHold := "" ; 待按住的单键（Single key to hold）
@@ -35,6 +36,21 @@ BasicAttackNeeded_Actions["incunit10resistance"] := true
 BasicAttackNeeded_Actions["decunit10resistance"] := true
 IsBold := true ; 是否使用粗体字（Whether to use bold characters）
 ProgressMonitorAlwaysOnTop := true ; 进度小窗口是否置顶（Whether the progress monitor is always on top）
+
+; 定义重复次数计算函数（Define repetition calculation function）
+/**
+ * 计算在训练模式中，在持有霸王血铠和无穷饥渴的情况下，需要按下多少次添加生命值按钮才能达到目标技能急速。<br>In practice Tool, with Overlord's Bloodmail and Endless Hunger, Calculate how many times the Add HP button must be pressed to reach the target ability haste value.
+ * @param {Integer} abilityHaste 目标技能急速。<br>Target ability haste.
+ * @param {Integer} ranged 是否应用远程数值。<br>Whether to apply the ranged value.
+ * @returns {Integer} 一共需要按下添加生命值按钮的次数。<br>The total amount of times needed to press the Add HP button.
+ */
+AH2Repeat(abilityHaste, ranged) {
+    boAD2AH_ratio := ranged ? 0.1 : 0.13 ; 无穷饥渴的额外攻击力转技能急速的比例（The conversion ratio of ability haste to bonus attack damage for Endless Hunger）
+    boHP2AD_ratio := 0.025 ; 霸王血铠的额外生命值转攻击力的比例（The conversion ratio of bonus health to attack damage for Overlord's Bloodmail）
+    HPPerPress := 100 ; 每次按下按钮时添加的生命值（Health added for every press of the button）
+    press_count := Integer((abilityHaste - 5) / boAD2AH_ratio / boHP2AD_ratio / HPPerPress) ; 总共需要按下按钮的次数（The total amount of times of pressing the button）
+    return press_count
+}
 
 ; 准备一些测量函数（Prepare some measure functions）
 /**
@@ -140,6 +156,11 @@ U(n) {
 ;; 定义字符串常量池（Define stringtable）
 Stringtable := {
     Title: "训练模式连点器 | Practice AutoClicker",
+    Menu: {
+        Help: {
+            Hotkey: "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n!h`tAlt + H`n^h`tCtrl + H`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/"
+        }
+    },
     Left: {
         Declaration: {
             Text1: "《英雄联盟》训练模式按键辅助工具`nLeague of Legends Practice Tool Key Press Assistant",
@@ -184,6 +205,7 @@ Stringtable := {
     Right: {
         Config: {
             Title: "参数设置`nParameter Configuration",
+            AbilityHastePrompt: "目标技能急速`nTarget Ability Haste",
             RepetitionPrompt: "重复次数`nRepetition",
             ExecutionIntervalPrompt: "命令执行间隔`nCommand Execution Interval",
             AbortHotkeyPrompt: "中止热键`nAbort Hotkey",
@@ -198,7 +220,6 @@ Stringtable := {
             ResetButton: "复位/Reset",
             ResetAllButton: "复位全部参数`nReset all parameters"
         },
-        HelpDoc: "组合键格式（Key combination rule）：`n#`tWindows`n!`tAlt`n^`tCtrl`n+`tShift`n<`t左控制键（Left control）`n>`t右控制键（Right control）`n示例（Examples）：`n#s`tWindows + S`n!h`tAlt + H`n^h`tCtrl + H`n<^t`tLCtrl + t`n游戏内仅Windows+单键可用。`nOnly Windows plus a single key works in game.`n更多热键字符串请参考AutoHotKey官方文档。`nFor more hotkey strings, please refer to AutoHotKey official documentation.`n#+z: https://www.autohotkey.com/docs/v2/"
     }
 }
 ;; 定义配置层（Define config layer）
@@ -257,40 +278,45 @@ Config_default := {
         ;                                类型           横坐标   纵坐标                                                                               宽度                高度            选项         文本
         ;                                Type           X       Y                                                                                   Width               Height          Options     Text
         Title:                          ["Text",        0,      PadY,                                                                               750,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.Title],
-        RepetitionLabel:                ["Text",        0,      PadY * 2 + H_TEXT_2L,                                                               250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.RepetitionPrompt],
-        RepetitionEdit:                 ["Edit",        250,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_EDIT_1L) / 2,                                 80,                 H_EDIT_1L,      "Number",   maxLoops], ; Number属性限制数字输入（"Number" restricts the input type）
-        UpdateRepetitionButton:         ["Button",      340,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_BUTTON_1L) / 2,                               120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        RepetitionValue:                ["Text",        470,    PadY * 2 + H_TEXT_2L * 1.25,                                                        90,                 H_TEXT_1L,      "",         ""],
-        MeleeResetRepetitionButton:     ["Button",      560,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_BUTTON_2L) / 2,                               120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.MeleeResetButton],
-        RangedResetRepetitionButton:    ["Button",      690,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_BUTTON_2L) / 2,                               120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.RangedResetButton],
-        ExecutionIntervalLabel:         ["Text",        0,      PadY * 3 + H_TEXT_2L * 2,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.ExecutionIntervalPrompt],
-        ExecutionIntervalEdit:          ["Edit",        250,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   executionInterval],
-        UpdateExecutionIntervalButton:  ["Button",      340,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        ExecutionIntervalValue:         ["Text",        470,    PadY * 3 + H_TEXT_2L * 2.25,                                                        90,                 H_TEXT_1L,      "",         ""],
-        ResetExecutionIntervalButton:   ["Button",      560,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        AbortHotkeyLabel:               ["Text",        0,      PadY * 4 + H_TEXT_2L * 3,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.AbortHotkeyPrompt],
-        AbortHotkeyEdit:                ["Edit",        250,    PadY * 4 + H_TEXT_2L * 3 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "",         K_Stop],
-        UpdateAbortHotkeyButton:        ["Button",      340,    PadY * 4 + H_TEXT_2L * 3 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        AbortHotkeyValue:               ["Text",        470,    PadY * 4 + H_TEXT_2L * 3.25,                                                        90,                 H_TEXT_1L,      "",         ""],
-        ResetAbortHotkeyButton:         ["Button",      560,    PadY * 4 + H_TEXT_2L * 3 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        SingleKeyToHoldLabel:           ["Text",        0,      PadY * 5 + H_TEXT_2L * 4,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.SingleKeyToHoldPrompt],
-        SingleKeyToHoldEdit:            ["Edit",        250,    PadY * 5 + H_TEXT_2L * 4 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "",         singleKeyToHold],
-        UpdateSingleKeyToHoldButton:    ["Button",      340,    PadY * 5 + H_TEXT_2L * 4 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        SingleKeyToHoldValue:           ["Text",        470,    PadY * 5 + H_TEXT_2L * 4.25,                                                        90,                 H_TEXT_1L,      "",         ""],
-        ResetSingleKeyToHoldButton:     ["Button",      560,    PadY * 5 + H_TEXT_2L * 4 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        HoldDetectIntervalLabel:        ["Text",        0,      PadY * 6 + H_TEXT_2L * 5,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.HoldDetectIntervalPrompt],
-        HoldDetectIntervalEdit:         ["Edit",        250,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   holdDetectInterval],
-        UpdateHoldDetectIntervalButton: ["Button",      340,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        HoldDetectIntervalValue:        ["Text",        470,    PadY * 6 + H_TEXT_2L * 5.25,                                                        90,                 H_TEXT_1L,      "",         ""],
-        ResetHoldDetectIntervalButton:  ["Button",      560,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        HoldCooldownLabel:              ["Text",        0,      PadY * 7 + H_TEXT_2L * 6,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.HoldCooldownPrompt],
-        HoldCooldownEdit:               ["Edit",        250,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   holdCooldown],
-        UpdateHoldCooldownButton:       ["Button",      340,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
-        HoldCooldownValue:              ["Text",        470,    PadY * 7 + H_TEXT_2L * 6.25,                                                        90,                 H_TEXT_1L,      "",         ""],
-        ResetHoldCooldownButton:        ["Button",      560,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
-        ResetAllParameterButton:        ["Button",      310,    PadY * 8 + H_TEXT_2L * 7,                                                           180,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.ResetAllButton],
-        Separator:                      ["Text",        0,      PadY * 9 + H_TEXT_2L * 7 + H_BUTTON_2L,                                             800,                H_HSEPARATOR,   "0x10",     ""],
-        AbortHotkeyHelpDoc:             ["Text",        0,      PadY * 10 + H_TEXT_2L * 7 + H_BUTTON_2L + H_HSEPARATOR,                             800,                H_TEXT_17L,     "",         Stringtable.Right.HelpDoc],
+        AbilityHasteLabel:              ["Text",        0,      PadY * 2 + H_TEXT_2L,                                                               250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.AbilityHastePrompt],
+        AbilityHasteEdit:               ["Edit",        250,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_EDIT_1L) / 2,                                 80,                 H_EDIT_1L,      "Number",   abilityHaste], ; Number属性限制数字输入（"Number" restricts the input type）
+        UpdateAbilityHasteButton:       ["Button",      340,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_BUTTON_1L) / 2,                               120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        AbilityHasteValue:              ["Text",        470,    PadY * 2 + H_TEXT_2L * 1.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetAbilityHasteButton:        ["Button",      560,    PadY * 2 + H_TEXT_2L + (H_TEXT_2L - H_BUTTON_1L) / 2,                               120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        RepetitionLabel:                ["Text",        0,      PadY * 3 + H_TEXT_2L * 2,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.RepetitionPrompt],
+        RepetitionEdit:                 ["Edit",        250,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   maxLoops],
+        UpdateRepetitionButton:         ["Button",      340,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        RepetitionValue:                ["Text",        470,    PadY * 3 + H_TEXT_2L * 2.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        MeleeResetRepetitionButton:     ["Button",      560,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_2L) / 2,                           120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.MeleeResetButton],
+        RangedResetRepetitionButton:    ["Button",      690,    PadY * 3 + H_TEXT_2L * 2 + (H_TEXT_2L - H_BUTTON_2L) / 2,                           120,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.RangedResetButton],
+        ExecutionIntervalLabel:         ["Text",        0,      PadY * 4 + H_TEXT_2L * 3,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.ExecutionIntervalPrompt],
+        ExecutionIntervalEdit:          ["Edit",        250,    PadY * 4 + H_TEXT_2L * 3 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   executionInterval],
+        UpdateExecutionIntervalButton:  ["Button",      340,    PadY * 4 + H_TEXT_2L * 3 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        ExecutionIntervalValue:         ["Text",        470,    PadY * 4 + H_TEXT_2L * 3.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetExecutionIntervalButton:   ["Button",      560,    PadY * 4 + H_TEXT_2L * 3 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        AbortHotkeyLabel:               ["Text",        0,      PadY * 5 + H_TEXT_2L * 4,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.AbortHotkeyPrompt],
+        AbortHotkeyEdit:                ["Edit",        250,    PadY * 5 + H_TEXT_2L * 4 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "",         K_Stop],
+        UpdateAbortHotkeyButton:        ["Button",      340,    PadY * 5 + H_TEXT_2L * 4 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        AbortHotkeyValue:               ["Text",        470,    PadY * 5 + H_TEXT_2L * 4.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetAbortHotkeyButton:         ["Button",      560,    PadY * 5 + H_TEXT_2L * 4 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        SingleKeyToHoldLabel:           ["Text",        0,      PadY * 6 + H_TEXT_2L * 5,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.SingleKeyToHoldPrompt],
+        SingleKeyToHoldEdit:            ["Edit",        250,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "",         singleKeyToHold],
+        UpdateSingleKeyToHoldButton:    ["Button",      340,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        SingleKeyToHoldValue:           ["Text",        470,    PadY * 6 + H_TEXT_2L * 5.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetSingleKeyToHoldButton:     ["Button",      560,    PadY * 6 + H_TEXT_2L * 5 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        HoldDetectIntervalLabel:        ["Text",        0,      PadY * 7 + H_TEXT_2L * 6,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.HoldDetectIntervalPrompt],
+        HoldDetectIntervalEdit:         ["Edit",        250,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   holdDetectInterval],
+        UpdateHoldDetectIntervalButton: ["Button",      340,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        HoldDetectIntervalValue:        ["Text",        470,    PadY * 7 + H_TEXT_2L * 6.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetHoldDetectIntervalButton:  ["Button",      560,    PadY * 7 + H_TEXT_2L * 6 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        HoldCooldownLabel:              ["Text",        0,      PadY * 8 + H_TEXT_2L * 7,                                                           250,                H_TEXT_2L,      "Center",   Stringtable.Right.Config.HoldCooldownPrompt],
+        HoldCooldownEdit:               ["Edit",        250,    PadY * 8 + H_TEXT_2L * 7 + (H_TEXT_2L - H_EDIT_1L) / 2,                             80,                 H_EDIT_1L,      "Number",   holdCooldown],
+        UpdateHoldCooldownButton:       ["Button",      340,    PadY * 8 + H_TEXT_2L * 7 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.UpdateButton],
+        HoldCooldownValue:              ["Text",        470,    PadY * 8 + H_TEXT_2L * 7.25,                                                        90,                 H_TEXT_1L,      "",         ""],
+        ResetHoldCooldownButton:        ["Button",      560,    PadY * 8 + H_TEXT_2L * 7 + (H_TEXT_2L - H_BUTTON_1L) / 2,                           120,                H_BUTTON_1L,    "Center",   Stringtable.Right.Config.ResetButton],
+        ResetAllParameterButton:        ["Button",      310,    PadY * 9 + H_TEXT_2L * 8,                                                           180,                H_BUTTON_2L,    "Center",   Stringtable.Right.Config.ResetAllButton],
+        Separator:                      ["Text",        0,      PadY * 10 + H_TEXT_2L * 8 + H_BUTTON_2L,                                            800,                H_HSEPARATOR,   "0x10",     ""],
+        HotkeyHelpDoc:                  ["Text",        0,      PadY * 11 + H_TEXT_2L * 8 + H_BUTTON_2L + H_HSEPARATOR,                             800,                H_TEXT_17L,     "",         Stringtable.Menu.Help.Hotkey],
     }
 }
 ;; 控件添加层（Control addition layer）
@@ -396,7 +422,17 @@ Settings_Update_ProgressMonitorAlwaysOnTop() {
  * 显示关于对话框。<br>Show about dialog box.
  */
 ShowAbout(*) {
-    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.1.0`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-10-22`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
+    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.1.1`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-10-26`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
+}
+
+/**
+ * 显示帮助对话框。<br>Show help dialog box.
+ * @param {String} helpCategory 帮助类别。可用的取值如下：<br>Help cateogry. Available values are as follows:
+ * - "hotkey": 热键字符串书写规则。<br>Rules for writing hotkey strings.
+ */
+ShowHelp(helpCategory, *) {
+    if helpCategory == "hotkey"
+        MsgBox(Stringtable.Menu.Help.Hotkey, "热键字符串书写规则 | Rules for writing hotkey strings")
 }
 
 /**
@@ -416,14 +452,14 @@ RebuildUI() {
  * 构建主界面。<br>Create the main GUI.
  */
 CreateMainGui() {
-    global MyGui, SettingsMenu, ActionConfigs, B_HoldSequence, B_RunSequence, B_Stop, T_Status, P_Progress, E_SingleKey, CheckBox1, CheckBox2, CheckBox3, L_KeySequence, E_Repetition, T_Repetition, E_ExecutionInterval, T_ExecutionInterval, E_StopKey, T_StopKey, E_SingleKeyToHold, T_SingleKeyToHold, E_HoldDetectInterval, T_HoldDetectInterval, E_HoldCooldown, T_HoldCooldown
+    global MyGui, SettingsMenu, ActionConfigs, B_HoldSequence, B_RunSequence, B_Stop, T_Status, P_Progress, E_SingleKey, CheckBox1, CheckBox2, CheckBox3, L_KeySequence, E_AbilityHaste, T_AbilityHaste, E_Repetition, T_Repetition, E_ExecutionInterval, T_ExecutionInterval, E_StopKey, T_StopKey, E_SingleKeyToHold, T_SingleKeyToHold, E_HoldDetectInterval, T_HoldDetectInterval, E_HoldCooldown, T_HoldCooldown
     ; 下面设置图形化界面（Set the graphical user interface）    
     MyGui := Gui() ; 初始化图形化界面（Initialize Graphical User Interface）
     ;; 标题（Title）
     MyGui.SetFont(FONT_OPTIONS, FONT_NAME)
     MyGui.Title := Stringtable.Title
     ;; 菜单栏（Menu bar）
-    MyMenu := MenuBar()
+    ;;; 设置（Settings）
     SettingsMenu := Menu()
     FontSizeMenu := Menu()
     Loop 15 {
@@ -437,8 +473,14 @@ CreateMainGui() {
         SettingsMenu.Check("加粗 | Bold")
     SettingsMenu.Add("执行进度置顶 | Progress always on top", Settings_Toggle_ProgressMionitorAlwaysOnTop)
     Settings_Update_ProgressMonitorAlwaysOnTop()
+    ;;; 帮助（Help）
+    HelpMenu := Menu()
+    HelpMenu.Add("书写热键字符串 | Write hotkey string", (*) => ShowHelp("hotkey"))
+    HelpMenu.Add("关于 | About", ShowAbout)
+    ;;; 组合（Composition）
+    MyMenu := MenuBar()
     MyMenu.Add("设置 | Settings", SettingsMenu)
-    MyMenu.Add("关于 | About", ShowAbout)
+    MyMenu.Add("帮助 | Help", HelpMenu)
     MyGui.MenuBar := MyMenu
     ;; 左侧——按键部分（Left part - key press part）
     ;;; 声明（Declaration）
@@ -496,6 +538,12 @@ CreateMainGui() {
     ;; 右侧——参数配置（Right part - parameter configuration）
     ;;; 标题（Title）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.Title)
+    ;;; 目标技能急速（Target ability haste）
+    AddCtrl(MyGui, 5, Config_default.Right_Controls.AbilityHasteLabel)
+    E_AbilityHaste := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbilityHasteEdit)
+    B_AbilityHaste_Update := AddCtrl(MyGui, 5, Config_default.Right_Controls.UpdateAbilityHasteButton)
+    T_AbilityHaste := AddCtrl(MyGui, 5, Config_default.Right_Controls.AbilityHasteValue)
+    B_AbilityHaste_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAbilityHasteButton)
     ;;; 重复次数（Repetition）
     AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionLabel)
     E_Repetition := AddCtrl(MyGui, 5, Config_default.Right_Controls.RepetitionEdit)
@@ -535,10 +583,6 @@ CreateMainGui() {
     B_HoldCooldown_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetHoldCooldownButton)
     ;;; 全参数复位按钮（Button to reset all parameters）
     B_All_Reset := AddCtrl(MyGui, 5, Config_default.Right_Controls.ResetAllParameterButton)
-    ;; 右侧第一分隔线（First separator of the left part）
-    AddCtrl(MyGui, 5, Config_default.Right_Controls.Separator) ; 添加水平分隔线（Add horizontal separator）
-    ;; 按键格式说明文本（Key format instruction text）
-    AddCtrl(MyGui, 5, Config_default.Right_Controls.AbortHotkeyHelpDoc)
     
     ; 动作配置（Action config）
     ActionConfigs := Map() ; 设置用于`A_StartAction`的动作配置表（Set up an action config table for `A_StartAction` process）
@@ -609,6 +653,9 @@ CreateMainGui() {
     B_Stop.OnEvent("Click", A_Stop)
     B_Quit.OnEvent("Click", (*) => (StopKeyHoldDetect(), ExitApp()))
     ;; 参数设置（Parameter configuration）
+    ;;; 目标技能急速（Target ability haste）
+    B_AbilityHaste_Update.OnEvent("Click", A_Param_AbilityHaste_UpdateValue)
+    B_AbilityHaste_Reset.OnEvent("Click", A_Param_AbilityHaste_ResetValue)
     ;;; 重复次数（Repetition）
     B_Repetition_Update.OnEvent("Click", A_Param_Repetition_UpdateValue)
     B_Repetition_Reset_Melee.OnEvent("Click", (*) => A_Param_Repetition_ResetValue(false))
@@ -635,6 +682,7 @@ CreateMainGui() {
     ; MyGui.OnEvent("Escape", (*) => (StopKeyHoldDetect(), ExitApp())) ; 按Esc键关闭程序。暂时禁用（Press "Esc" to close the app. Temporarily disabled）
     
     ; 其它准备工作（Other preparations）
+    A_Param_AbilityHaste_UpdateDisplay(abilityHaste)
     A_Param_Repetition_UpdateDisplay(maxLoops)
     A_Param_ExecutionInterval_UpdateDisplay(executionInterval)
     A_Param_StopKey_UpdateDisplay(K_Stop)
@@ -1044,6 +1092,43 @@ A_Stop(*) {
     }
 }
 
+; 更新目标技能急速的函数（Update the target ability haste）
+/**
+ * 读取目标技能急速编辑框并更新目标技能急速。<br>Read repetition edit box and update repetition.
+ */
+A_Param_AbilityHaste_UpdateValue(*) {
+    global abilityHaste
+    inputValue := E_AbilityHaste.Value
+    
+    ; 验证：确保输入是正整数（Ensure the input is a positive integer）
+    if Integer(inputValue) > 0 {
+        abilityHaste := Integer(inputValue)
+        T_Status.Text := Format("目标技能急速已更新。`nTarget ability haste has been updated.", inputValue)
+        A_Param_AbilityHaste_UpdateDisplay(abilityHaste)
+    }
+    else 
+        T_Status.Text := "目标技能急速必须大于0。`nTarget ability haste must be greater than 0."
+}
+
+/**
+ * 更新目标技能急速的显示。<br>Update the display of repetition.
+ * @param {Integer} abilityHaste 要显示的目标技能急速。<br>The repetition to display.
+ */
+A_Param_AbilityHaste_UpdateDisplay(abilityHaste) {
+    T_AbilityHaste.Text := Format("{1:d}", abilityHaste)
+}
+
+/**
+ * 重置目标技能急速。<br>Reset repetition.
+ * @param {Integer} ranged 是否应用远程数值。<br>Whether to apply the ranged value.
+ */
+A_Param_AbilityHaste_ResetValue(*) {
+    global abilityHaste
+    abilityHaste := 500
+    A_Param_AbilityHaste_UpdateDisplay(abilityHaste)
+    T_Status.Text := "目标技能急速已复位。`nTarget ability haste has been reset."
+}
+
 ; 更新循环次数的函数（Update the loop count）
 /**
  * 读取重复次数编辑框并更新重复次数。<br>Read repetition edit box and update repetition.
@@ -1076,10 +1161,7 @@ A_Param_Repetition_UpdateDisplay(maxLoops) {
  */
 A_Param_Repetition_ResetValue(ranged) {
     global maxLoops
-    if ranged
-        maxLoops := 1980
-    else
-        maxLoops := 1523
+    maxLoops := AH2Repeat(abilityHaste, ranged)
     A_Param_Repetition_UpdateDisplay(maxLoops)
     T_Status.Text := "重复次数已复位。`nThe number of repetitions has been reset."
 }
@@ -1299,6 +1381,7 @@ A_Param_HoldCooldown_ResetValue(*) {
  * 对于重复次数，重置为远程默认数值。<br>As for repetition, it's reset as the default ranged value.
  */
 A_Param_All_Reset(*) {
+    A_Param_AbilityHaste_ResetValue()
     A_Param_Repetition_ResetValue(true)
     A_Param_ExecutionInterval_ResetValue()
     A_Param_StopKey_ResetValue()
