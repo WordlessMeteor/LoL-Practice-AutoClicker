@@ -1,5 +1,8 @@
 # LoL-Practice-AutoClicker
 
+[Speak English? Click here to view the English introduction.](README.md)
+
+----
 **本程序免费使用！请勿相信任何要求您支付的人！**\
 **请勿在游玩匹配对局（包括玩家对战和人机对战）时使用此连点器！由此产生的账号封禁问题，后果自负！**
 
