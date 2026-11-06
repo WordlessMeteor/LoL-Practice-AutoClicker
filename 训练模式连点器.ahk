@@ -22,7 +22,7 @@ maxLoops := AH2Repeat(abilityHaste, true) ; 重复次数（Repetition times）
 executionInterval := 0 ; 命令执行间隔（Command execution interval）
 K_Stop := "#s" ; 停止热键（Stop hotkey）
 singleKeyToHold := "" ; 待按住的单键（Single key to hold）
-holdDetectInterval := 250 ; 按住检测间隔（Hold detection interval）
+holdDetectInterval := 500 ; 按住检测间隔（Hold detection interval）
 holdCooldown := 0 ; 长按冷却时间（Hold cooldown）
 keyHeld := [] ; 待检测按下状态的单键（Single keys awaiting to detect whether it's on hold）
 Hotkey(K_Stop, A_Stop, "On")
@@ -50,6 +50,27 @@ AH2Repeat(abilityHaste, ranged) {
     HPPerPress := 100 ; 每次按下按钮时添加的生命值（Health added for every press of the button）
     press_count := Integer((abilityHaste - 5) / boAD2AH_ratio / boHP2AD_ratio / HPPerPress) ; 总共需要按下按钮的次数（The total amount of times of pressing the button）
     return press_count
+}
+
+; 定义小数显示简化函数（Define float display simplification function）
+/**
+ * 去除小数结尾的0。<br>Remove the ending 0s from a float.
+ * 
+ * 注意：先执行保留小数，再执行去零过程。例如，1.0001在保留三位小数后变成1.000，去零后变成1，因此`FormatTrimZeros(1.0001, 3)`返回的是字符串“1”。<br>Note: The process involves first rounding/truncating to a specified number of decimal places, followed by the removal of trailing zeros. For example, 1.0001 becomes 1.000 after being rounded/truncated to three decimal places, and subsequently becomes 1 after the removal of trailing zeros. Therefore, `FormatTrimZeros(1.0001, 3)` returns the string "1".
+ * @param {Float} f 待简化的小数。<br>The float to simplify.
+ * @param {Integer} n 保留的小数位数。默认是3，即保留三位小数。<br>Number of decimal places to retain. 3 by default, which means three decimal places to keep.
+ * @returns {String} 保留小数位数且去除结尾的0后的小数的字符串。<br>The string of the float after retaining certain amount of decimal places and removing the trailing 0s.
+ */
+FormatTrimZeros(f, n := 3) { ; n的默认值设置成3是考虑到设置秒数时，可以精确到毫秒（The default value of n is set to 3 to allow for millisecond-level precision when specifying a duration in seconds）
+    if n < 0 ; 传入负数表示保留所有小数位数（Pass a negative number to retain all decimal places）
+        s := String(f)
+    else
+        s := Format("{1:." n "f}", f)
+    if InStr(s, ".") { ; 避免去除整数结尾的0（Avoid removing trailing 0s from an integer）
+        s := RTrim(s, "0") ; 去除小数结尾的0（Remove trailing 0s from the float）
+        s := RTrim(s, ".") ; 如果所有小数位数都是0，那么还要去除小数点（If all decimal places are 0, then remove the decimal point）
+    }
+    return s
 }
 
 ; 准备一些测量函数（Prepare some measure functions）
@@ -422,7 +443,7 @@ Settings_Update_ProgressMonitorAlwaysOnTop() {
  * 显示关于对话框。<br>Show about dialog box.
  */
 ShowAbout(*) {
-    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.1.1`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-10-26`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
+    MsgBox("训练模式连点器（Practice Tool Auto Clicker） v1.1.1`n程序网址（Program URL）：https://github.com/WordlessMeteor/LoL-Practice-AutoClicker`n按下Windows+Alt+Z打开。`nPress Windows+Alt+Z to open it.`n作者（Author）：WordlessMeteor`n上次更新时间（Latest update）：2026-11-06`n`n本程序为免费的自动化工具。如果您在非官方渠道获取本程序，或有人向您收费，请高度警惕，这极有可能是诈骗。`nThis program is a free automation assistance tool. If you obtained this program from an unofficial channel, or someone is charging you, please be highly vigilant - this is very likely a scam.", "关于 | About", 0x40)
 }
 
 /**
@@ -1324,7 +1345,7 @@ A_Param_HoldDetectInterval_UpdateValue(*) {
  * @param {String} holdDetectInterval 有效的长按检测间隔。<br>VALID hold detection interval.
  */
 A_Param_HoldDetectInterval_UpdateDisplay(holdDetectInterval) {
-    T_HoldDetectInterval.Value := Format("{1:d} ms", holdDetectInterval)
+    T_HoldDetectInterval.Value := FormatTrimZeros(holdDetectInterval / 1000) " s" ; 默认保留三位小数，即精确到毫秒（By default retain three decimal places, providing precision down to the millisecond）
 }
 
 /**
@@ -1332,7 +1353,7 @@ A_Param_HoldDetectInterval_UpdateDisplay(holdDetectInterval) {
  */
 A_Param_HoldDetectInterval_ResetValue(*) {
     global holdDetectInterval
-    holdDetectInterval := 250
+    holdDetectInterval := 500
     A_Param_HoldDetectInterval_UpdateDisplay(holdDetectInterval)
     T_Status.Text := "长按检测间隔已复位。`nThe hold detection interval has been reset."
 }
